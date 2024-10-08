@@ -4,6 +4,8 @@ import LoginPage from '@/views/LoginPage.vue'
 import Customer_Registration from '@/views/Customer_Registration.vue'
 import Professional_Registration from '@/views/Professional_Registration.vue'
 import Dashboard from '@/views/Dashboard.vue'
+import Categories from '@/views/Categories.vue'
+import Services from '@/views/Services.vue'
 
 const routes = [
   {
@@ -30,6 +32,16 @@ const routes = [
     path: '/dashboard',
     name: 'dashboard',
     component: Dashboard
+  },
+  {
+    path: '/categories',
+    name: 'categories',
+    component: Categories
+  },
+  {
+    path: '/services',
+    name: 'services',
+    component: Services
   }
 ]
 

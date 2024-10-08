@@ -36,3 +36,31 @@ class User(db.Model):
             self.is_active = False
       else:
             self.is_active = True
+            
+class Category(db.Model):
+    __tablename__ = 'categories'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False, unique=True)
+    services = db.relationship('Service', backref='category', lazy=True)
+
+    def __init__(self, name):
+        self.name = name
+
+
+class Service(db.Model):
+    __tablename__ = 'services'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.String(255), nullable=True)  
+    price = db.Column(db.Float, nullable=False)  
+    time_required = db.Column(db.DateTime, nullable=False)  
+    category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=False)
+    
+    def __init__(self, name, description, price, time_required, category_id):
+        self.name = name
+        self.description = description
+        self.price = price
+        self.time_required = time_required
+        self.category_id = category_id

@@ -66,7 +66,7 @@ export default {
                 else {
                     alert(data.message)
                     // this.$router.push('/')
-                    window.location.reload();
+                    window.location.href = "/";
                 }
             }catch(error) {
                 console.log(error)

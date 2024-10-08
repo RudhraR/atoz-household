@@ -1,74 +1,93 @@
 <template>
-    <Navbar />
-    <div class="container mt-5">
-        <h2>Serive PRofessional Registration</h2>
-        <form @submit.prevent="register">
-            <div class="mb-3">
-                <label for="username" class="form-label">Username</label>
-                <input v-model="username" type="text" class="form-control" id="username" required>
-            </div>
+    <NavBar />
+    <div class="d-flex justify-content-center align-items-center vh-100">
+    <div class="card shadow">
+    <!-- <div class="card-header"><h5>Service Professional Registration</h5></div> -->
+    <h5 class="card-header">Service Professional Registration</h5>
+      <div class="card-body">
+      <div class="form-group mb-3">
+        <input v-model="username" type="text" class="form-control" placeholder="Name" required/>
+      </div>
+      <div class="form-group mb-3">
+        <input v-model="email" type="email" class="form-control" placeholder="Email" required/>
+      </div>
+      <div class="form-group mb-3">
+        <input v-model="password" type="password" class="form-control" placeholder="Password" required/>
+      </div>
+      <div class="form-group mb-3">
+         <input v-model="services_provided" type="text" class="form-control" placeholder="Services Available (e.g., plumbing, electrical)" required/>
+        </div>
+        <div class="form-group mb-3">
+        <!-- <label for="experience">Experience (in years)</label> -->
+          <input v-model="experience" type="number" class="form-control" min="0" placeholder="Experience (in years)" required/>
+        </div>
 
-            <div class="mb-3">
-                <label for="email" class="form-label">Email address</label>
-                <input v-model="email" type="email" class="form-control" id="email" aria-describedby="emailHelp" required>
-                <div id="emailHelp" class="form-text">We'll never share your email with anyone else.</div>
-            </div>
-
-            <div class="mb-3">
-                <label for="password" class="form-label">Password</label>
-                <input v-model="password" type="password" class="form-control" id="password" required>
-            </div>
-            <div class="mb-3 form-check">
-                <input v-model="isManager" type="checkbox" class="form-check-input" id="isManager">
-                <label class="form-check-label" for="isManager">Want to register as manager?</label>
-            </div>
-            <button type="submit" class="btn btn-primary">Submit</button>
-        </form>
+      <div class="form-group mb-3">
+          <label for="address" style="text-align: left; display: block;">&nbsp;Address</label>
+          <textarea class="form-control" v-model="address" name="address" rows="2" required></textarea>
+      </div>
+      <div class="form-group mb-3">
+        <input v-model="pincode" type="text" class="form-control" placeholder="Pincode" required/>
+      </div>
+      <button class="btn btn-primary w-100" @click="register">Submit</button>
+      
+  </div></div>
     </div>
+
 </template>
 
 <script>
-import Navbar from '../components/NavBar.vue'
+import NavBar from '../components/NavBar.vue'
 export default {
-    name: "professional_registration",
-    data() {
-        return {
-            username: '',
-            email: '',
-            password: '',
-            isManager: false
-        }
-    },
-    components: {
-        Navbar
-    },
-    methods: {
-        async register() {
-            try {
-                const response = await fetch('http://127.0.0.1:5000/register', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        username: this.username,
-                        email: this.email,
-                        password: this.password,
-                        role: this.isManager ? "manager" : "user"
-                    })
-                })
-                const data = await response.json()
-                if (!response.ok) {
-                    alert(data.error)
-                }
-                else {
-                    alert(data.message)
-                    this.$router.push('/')
-                }
-            }catch(error) {
-                console.log(error)
-            }
-    }
+  name: "professional_registration",
+  data() {
+      return {
+          email: "",
+          password: "",
+          username:"",
+          address:"",
+          pincode:"",
+          services_provided:"",
+          experience:"",
+          role:""
+      }
+  },
+  components: {
+    NavBar
+  },
+  methods: {
+      async register() {
+          try {
+              const response = await fetch('http://127.0.0.1:5000/register', {
+                  method: 'POST',
+                  headers: {
+                      'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({
+                      email: this.email,
+                      password: this.password,
+                      username: this.username,
+                      address: this.address,
+                      pincode: this.pincode,
+                      services_provided: this.services_provided,
+                      experience: this.experience,
+                      role: "professional"             
+                  })
+              })
+              const data = await response.json()
+              console.log("Data: ", data)
+              if (!response.ok) {
+                  alert(data.error)
+              }
+              else {
+                  alert(data.message)
+                  this.$router.push('/')
+                //   window.location.reload();
+              }
+          }catch(error) {
+              console.log(error)
+          }
+  }
 }}
 </script>
 

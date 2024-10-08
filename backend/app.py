@@ -133,5 +133,103 @@ def logout():
     unset_jwt_cookies(response)
     return response, 200
 
+@app.route('/categories', methods=['POST'])
+@jwt_required()
+def create_category():
+    current_user = get_jwt_identity()
+    if current_user["role"] != "admin":
+        return jsonify({"message":"You are not authorized to access this resource"}), 403
+    data = request.json
+    new_category = Category(name=data['name'])
+    db.session.add(new_category)
+    db.session.commit()
+    return jsonify({'message': 'Category created'}), 201
+
+@app.route('/categories', methods=['GET'])
+def get_categories():
+    categories = Category.query.all()
+    categories_data = [{'id': category.id, 'name': category.name} for category in categories]
+    return jsonify({"message":"Categories found","categories":categories_data}), 200
+
+@app.route('/categories/<int:id>', methods=['PUT'])
+@jwt_required()
+def update_category(id):
+    current_user = get_jwt_identity()
+    if current_user["role"] != "admin":
+        return jsonify({"message":"You are not authorized to access this resource"}), 403
+    data = request.json
+    category = Category.query.get_or_404(id)
+    category.name = data['name']
+    db.session.commit()
+    return jsonify({'message': 'Category updated'})
+
+@app.route('/categories/<int:id>', methods=['DELETE'])
+@jwt_required()
+def delete_category(id):
+    current_user = get_jwt_identity()
+    if current_user["role"] != "admin":
+        return jsonify({"message":"You are not authorized to access this resource"}), 403
+    category = Category.query.filter_by(id=id).first()
+    if not category:
+        return jsonify({"error":"Category not found"}), 404
+    
+    try:
+        db.session.delete(category) 
+        db.session.commit()
+        return jsonify({"message":"Category deleted successfully"}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"Exception":str(e)}), 500
+    
+
+# Routes for Services
+@app.route('/services', methods=['POST'])
+@jwt_required() 
+def create_service():
+    data = request.json
+    new_service = Service(
+        name=data['name'],
+        description=data['description'],
+        price=data['price'],
+        time_required=datetime.fromisoformat(data['time_required']),  # Expecting ISO format
+        category_id=data['category_id']
+    )
+    db.session.add(new_service)
+    db.session.commit()
+    return jsonify({'message': 'Service created'}), 201
+
+@app.route('/services', methods=['GET'])
+def get_services():
+    services = Service.query.all()
+    return jsonify([{
+        'id': service.id,
+        'name': service.name,
+        'description': service.description,
+        'price': service.price,
+        'time_required': service.time_required.isoformat(),  # Convert to ISO format for JSON
+        'category_id': service.category_id
+    } for service in services])
+
+@app.route('/services/<int:id>', methods=['PUT'])
+@jwt_required() 
+def update_service(id):
+    data = request.json
+    service = Service.query.get_or_404(id)
+    service.name = data['name']
+    service.description = data.get('description', service.description)
+    service.price = data['price']
+    service.time_required = datetime.fromisoformat(data['time_required'])  # Expecting ISO format
+    service.category_id = data['category_id']
+    db.session.commit()
+    return jsonify({'message': 'Service updated'})
+
+@app.route('/services/<int:id>', methods=['DELETE'])
+@jwt_required()
+def delete_service(id):
+    service = Service.query.get_or_404(id)
+    db.session.delete(service)
+    db.session.commit()
+    return jsonify({'message': 'Service deleted'})
+
 if __name__ == "__main__":
     app.run(debug=True)
