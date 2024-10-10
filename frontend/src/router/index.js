@@ -7,7 +7,10 @@ import Dashboard from '@/views/Dashboard.vue'
 import Categories from '@/views/Categories.vue'
 import Services from '@/views/Services.vue'
 
+import AdminDashboard from '@/views/AdminDashboard.vue'
+
 const routes = [
+ 
   {
     path: '/',
     name: 'home',
@@ -42,6 +45,11 @@ const routes = [
     path: '/services',
     name: 'services',
     component: Services
+  },
+  {
+    path: '/admin_dashboard',
+    name: 'admin_dashboard',
+    component: AdminDashboard
   }
 ]
 

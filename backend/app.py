@@ -191,7 +191,7 @@ def create_service():
         name=data['name'],
         description=data['description'],
         price=data['price'],
-        time_required=datetime.fromisoformat(data['time_required']),  # Expecting ISO format
+        time_required= data['time_required'],
         category_id=data['category_id']
     )
     db.session.add(new_service)
@@ -201,14 +201,18 @@ def create_service():
 @app.route('/services', methods=['GET'])
 def get_services():
     services = Service.query.all()
-    return jsonify([{
-        'id': service.id,
-        'name': service.name,
-        'description': service.description,
-        'price': service.price,
-        'time_required': service.time_required.isoformat(),  # Convert to ISO format for JSON
-        'category_id': service.category_id
-    } for service in services])
+    service_data =[]
+    for service in services:
+        service_data.append({
+            'id': service.id,
+            'name': service.name,
+            'description': service.description,
+            'price': service.price,
+            'time_required': service.time_required,  
+            'category_id': service.category_id
+        })
+    return jsonify({"message":"Services found","services":service_data}), 200
+
 
 @app.route('/services/<int:id>', methods=['PUT'])
 @jwt_required() 
@@ -218,7 +222,7 @@ def update_service(id):
     service.name = data['name']
     service.description = data.get('description', service.description)
     service.price = data['price']
-    service.time_required = datetime.fromisoformat(data['time_required'])  # Expecting ISO format
+    service.time_required = data['time_required']
     service.category_id = data['category_id']
     db.session.commit()
     return jsonify({'message': 'Service updated'})

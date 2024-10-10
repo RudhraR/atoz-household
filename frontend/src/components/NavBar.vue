@@ -12,9 +12,12 @@
             <li class="nav-item">
               <router-link class="nav-link" to="/">Home</router-link>
             </li>
-            <li class="nav-item"  v-if="this.isLoggedin">
-              <router-link class="nav-link" to="/categories">Service Categories</router-link>
+            <!-- <li class="nav-item"  v-if="this.isLoggedin && this.role === 'admin'">
+              <router-link class="nav-link" to="/categories">Manage Categories</router-link>
             </li>
+            <li class="nav-item"  v-if="this.isLoggedin && this.role === 'admin'">
+              <router-link class="nav-link" to="/services">Manage Services</router-link>
+            </li> -->
             </ul>
           <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
             

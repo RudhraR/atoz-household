@@ -1,33 +1,38 @@
 <template>
-    <NavBar />
+    <!-- <NavBar /> -->
+    <div class="container"  style="margin-top: 20px;">
+      <div class="card shadow">
+        <h5 class="card-header">All Categories</h5> 
+        <div class="card-body">
+          <!-- <div style=" float:right; display: flex;"> -->
+            <div class="row">
+              <div class="col-6">
+            <input v-model="categoryName" placeholder="Category Name"  required/></div>
+            <div class="col-6"><button @click="addCategory" class="btn btn-sm btn-success" >
+               Add Category</button></div>
+          </div><br>
 
-    <div class="container">
-    <h3>All Categories</h3>
-    <div class="form-group" style=" float:right; display: flex;">
-        <input v-model="categoryName" placeholder="Category Name" required/>
-      <button @click="addCategory" class="btn btn-sm btn-primary" style="margin-left: -20px;">Add Category</button>
-    </div>
-    <table class = "table">
-        <thead>
+            <table class = "table">
+            <thead>
             <tr>
                 <th scope="col">#</th>
                 <th scope="col">Category Name</th>
-                <th scope="col">Actions</th>
+                <th scope="col" v-if = "role == 'admin'">Actions</th>
             </tr>
-        </thead>
-        <tbody>
-            <tr v-for="category in categories" :key="category.id">
-                <th scope="row">{{category.id}}</th>
+            </thead>
+            <tbody>
+            <tr v-for="(category, index) in categories" :key="category.id">
+                <th scope="row">{{index+1}}</th>
                 <td>{{category.name}}</td>
                 <td v-if = "role == 'admin'" class = "btn-group">
-                    <button type="button" class="btn btn-primary" @click="editCategory(category.id)">Edit</button>
-                    <button type="button" class="btn btn-danger" @click="deleteCategory(category.id)">Delete</button>
+                    <button type="button" class="btn btn-sm btn-primary" @click="editCategory(category.id)">Edit</button>
+                    <button type="button" class="btn btn-sm btn-danger" @click="deleteCategory(category.id)">Delete</button>
                 </td>
             </tr>
-        </tbody>
-    </table>
+            </tbody>
+            </table>
 
-    </div>
+    </div></div></div>
   </template>
   
   <script>
