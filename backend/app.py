@@ -4,6 +4,7 @@ from models import *
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager, get_jwt_identity, jwt_required, create_access_token, unset_jwt_cookies
 from werkzeug.utils import secure_filename
+import os
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -42,13 +43,13 @@ def hello():
 
 @app.route("/register", methods=["POST"])
 def register():
-    data = request.json
-    username = data.get("username")
-    email = data.get("email")
-    role = data.get("role")
-    password = data.get("password")
-    address = data.get('address')
-    pincode = data.get('pincode')
+    
+    username = request.form.get("username")
+    email = request.form.get("email")
+    role = request.form.get("role")
+    password = request.form.get("password")
+    address = request.form.get('address')
+    pincode = request.form.get('pincode')
 
     if not username or not email or not password or not role or not address or not pincode:
         return jsonify({"error":"All fields required"}), 400
@@ -56,20 +57,26 @@ def register():
     existingUser = User.query.filter_by(email=email).first() or User.query.filter_by(username=username).first()
     
     if existingUser:
-         return jsonify({"message":"User already exists"}), 200
+         return jsonify({"message":"Username/email already exists"}), 200
      
     if role == 'professional':
-        experience = data.get('experience')
-        services_provided = data.get('services_provided')
+        experience = request.form.get('experience')
+        services_provided = request.form.get('services_provided')
+        resume = request.files.get('resume')
         
-        if not experience or not services_provided:
-            return jsonify({"error":"All fields required"}), 400     
+        if not experience or not services_provided or not resume:
+            return jsonify({"error":"All fields required"}), 400   
+        
+        pdf_filename = secure_filename(username + "_resume.pdf")
+        pdf_path = os.path.join(app.config["RESUME_FOLDER"], pdf_filename)
+        os.makedirs(os.path.dirname(pdf_path), exist_ok=True)
+        resume.save(pdf_path)  
     
     try:
         if role == 'professional':
             user = User(username=username, email=email, role=role, password=password, 
                     address=address, pincode=pincode, experience=experience, 
-                    services_provided=services_provided)
+                    services_provided=services_provided, resume=pdf_filename)
         else:
              user = User(username=username, email=email, role=role, password=password, 
                     address=address, pincode=pincode)
@@ -158,7 +165,7 @@ def update_category(id):
     if current_user["role"] != "admin":
         return jsonify({"message":"You are not authorized to access this resource"}), 403
     data = request.json
-    category = Category.query.get_or_404(id)
+    category = Category.query.filter_by(id=id).first()
     category.name = data['name']
     db.session.commit()
     return jsonify({'message': 'Category updated'})
@@ -181,6 +188,11 @@ def delete_category(id):
         db.session.rollback()
         return jsonify({"Exception":str(e)}), 500
     
+@app.route('/categories/<int:category_id>/services', methods=['GET'])
+def get_services_by_category(category_id):
+    category = Category.query.get_or_404(category_id)
+    services_data = [{'id': service.id, 'name': service.name } for service in category.services]
+    return jsonify({'services': services_data})
 
 # Routes for Services
 @app.route('/services', methods=['POST'])

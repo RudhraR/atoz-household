@@ -18,7 +18,8 @@ class User(db.Model):
     #service professional fields
     experience = db.Column(db.String(100), nullable=True)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
-    services_provided = db.Column(db.String(200), nullable=True)
+    # services_provided = db.Column(db.String(200), nullable=True)
+    services_provided = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=True)
     resume = db.Column(db.String(255), nullable=True)
     
     def __init__(self, username, email, role, password, address=None, pincode=None, experience=None, services_provided=None, resume=None):
@@ -44,6 +45,7 @@ class Category(db.Model):
     name = db.Column(db.String(100), nullable=False, unique=True)
     services = db.relationship('Service', back_populates='category', cascade='all, delete')
     def __init__(self, name):
+
         self.name = name
 
 

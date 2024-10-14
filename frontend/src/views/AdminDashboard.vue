@@ -18,14 +18,13 @@
   import NavBar from '@/components/NavBar.vue'
   import Categories from './Categories.vue';
   import Services from './Services.vue';
-
   
   export default {
     name: 'AdminDashboard',
     components: {
       Categories,
       Services,
-      NavBar
+      NavBar,
     },
     mixins: [userMixin],
   }

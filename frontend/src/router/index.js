@@ -6,11 +6,12 @@ import Professional_Registration from '@/views/Professional_Registration.vue'
 import Dashboard from '@/views/Dashboard.vue'
 import Categories from '@/views/Categories.vue'
 import Services from '@/views/Services.vue'
-
 import AdminDashboard from '@/views/AdminDashboard.vue'
+import CustomerDashboard from '@/views/CustomerDashboard.vue'
+
 
 const routes = [
- 
+
   {
     path: '/',
     name: 'home',
@@ -50,6 +51,11 @@ const routes = [
     path: '/admin_dashboard',
     name: 'admin_dashboard',
     component: AdminDashboard
+  },
+  {
+    path: '/customer_dashboard',
+    name: 'customer_dashboard',
+    component: CustomerDashboard
   }
 ]
 

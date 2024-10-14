@@ -1,253 +1,184 @@
 <template>
-  <div  class="container" style="margin-top: 20px;">
+  <div class="container" style="margin-top: 20px;">
     <div class="card shadow">
       <div class="card-header">
-        <h5>All Services 
-        <button type="button" style="float:right;" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#addServiceModal">
-        <i class="bi bi-plus-lg"></i> &nbsp; Add New Service
-        </button></h5>
+        <h5>
+          All Services 
+          <button type="button" style="float:right;" class="btn btn-sm btn-success" @click="openModal('add')">
+            <i class="bi bi-plus-lg"></i> &nbsp; Add New Service
+          </button>
+        </h5>
       </div>
       <div class="card-body">
-        
-      <!-- Table to display categories with their respective services -->
-      <table class="table" >
-      <thead>
-        <tr>
-          <th scope="col" style="width: 20%;" class="text-muted">Category</th>
-          <th scope="col" style="width: 5%;">#</th>  
-          <th scope="col" style="width: 20%;">Service Name</th>
-          <th scope="col" style="width: 15%;">Price</th>
-          <th scope="col" style="width: 20%;">Time Required</th>
-          <th scope="col" style="width: 20%;">Actions</th>
-        </tr>
-        </thead>
-        <tbody>
-        <template v-if = "categoriesWithServices.length > 0 " 
-          v-for="category in categoriesWithServices" :key="category.id">      
-                 
-                 <th class="text-muted">{{ category.name }}:</th>
-                 <td></td>
-                 <td></td>
-                 <td></td>
-                 <td></td>
-                 
-                 <tr v-for="(service, serviceIndex) in category.services" :key="service.id">
-                   <td></td>
-                   <td> {{ serviceIndex + 1 }}</td>
-                   <td>{{ service.name }}</td>
-                   <td>Rs. {{ service.price }}</td>
-                   <td>{{ service.time_required }}</td>
-                   <td class = "btn-group">
-                    <button type="button" class="btn btn-sm btn-primary" @click="editService(service.id)">Edit</button>
-                    <button type="button" class="btn btn-sm btn-danger" @click="deleteService(service.id)">Delete</button>
-                  </td>
-                 </tr>         
-        </template>
-        <template v-else>
-          <tr>
-            <td colspan="6" class="text-center">No Services Available</td>
-          </tr>
-        </template>
-        </tbody>
-      </table>
-  </div></div>
-
-   <!-- Modal for Adding New Service -->
-   <div class="modal fade" id="addServiceModal" tabindex="-1" role="dialog" aria-labelledby="addServiceModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Add New Service</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body text-start">
-          <div class="mb-3 row">
-            <label for="serviceName" class="col-sm-3 col-form-label">Name</label>
-            <div class="col-sm-9"><input class="form-control" v-model="serviceName" placeholder="Service Name" /></div>
-          </div>
-          <div class="mb-3 row">
-            <label for="serviceDescription" class="col-sm-3 col-form-label">Description</label>
-            <div class="col-sm-9"><input class="form-control" v-model="serviceDescription" placeholder="Description" /></div>
-          </div>
-          <div class="mb-3 row">
-            <label for="servicePrice" class="col-sm-3 col-form-label">Price</label>
-            <div class="col-sm-9"><input class="form-control" v-model="servicePrice" placeholder="Price" /></div>
-          </div>
-          <div class="mb-3 row">
-            <label for="serviceTime" class="col-sm-4 col-form-label">Time Required</label>
-            <div class="col-sm-8">
-              <div class="row">
-                <div class = "col-sm-6">
-                <input v-model="timeValue" type="number" class="form-control" placeholder="Time Value" />
-                </div>
-                <div class = "col-sm-6">
-                <select v-model="timeUnit" class="form-select">
-                <option value="minutes">Minutes</option>
-                <option value="hours">Hours</option>
-              </select>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="mb-3 row">
-            <label for="serviceCategory" class="col-sm-3 col-form-label">Category</label>
-            <div class="col-sm-9">
-              <select v-model="selectedCategoryId" class="form-select">
-
-                <option v-for="category in categories" :key="category.id" :value="category.id">
-                {{ category.name }}</option>
-             </select>
-            </div>
-          </div>
-    </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-          <button type="button" class="btn btn-primary" @click="addService">Add Service</button>
-        </div>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Category </th>
+              <th>Service Name</th>
+              <th>Price</th>
+              <th>Time Required</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <template v-for="(category, index) in categoriesWithServices" :key="category.id">
+              <tr>
+                <th>{{ category.name }}:</th>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+              </tr>
+              <tr v-for="(service, serviceIndex) in category.services" :key="service.id">
+                <td>{{ serviceIndex + 1 }}</td>
+                <td><a @click="openModal('view', service)" style="cursor: pointer; " class="text-secondary">
+                  {{ service.name }}</a></td>
+                <td>{{ service.price }}</td>
+                <td>{{ service.time_required }}</td>
+                <td class="btn-group">
+                  <button class="btn btn-primary btn-sm" @click="openModal('edit', service)">Edit</button>
+                  <!-- <button class="btn btn-secondary btn-sm" @click="openModal('view', service)">Details</button> -->
+                  <button class="btn btn-danger btn-sm" @click="deleteService(service.id)">Delete</button>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
       </div>
     </div>
-  </div>  
-</div>
+
+    <!-- Reusable Modal for Add/Edit/View -->
+    <service-modal
+      v-if="isModalVisible"
+      :service="selectedService"
+      :mode="modalMode"
+      :user="this.user"
+      @close="isModalVisible = false"
+      @save="saveService"
+      :categories="categories"  
+    />
+  </div>
 </template>
 
 <script>
+import ServiceModal from '@/components/ServiceModal.vue' // Import the reusable modal component
 import userMixin from '@/mixins/userMixin';
 export default {
-  name: 'Services',
   mixins: [userMixin],
+  components: {
+    ServiceModal,
+  },
   data() {
     return {
-      showServiceModal: false,  // To control the visibility of the Add Service modal
+      isModalVisible: false,
+      selectedService: {
+      name: '',
+      description: '',
+      price: 0,
+      category_id: null,
+      time_value: 0, // Initialize time value for new service
+      time_unit: 'minutes', // Initialize time unit for new service
+    },
+      modalMode: 'add', // 'add', 'edit', or 'view'
       services: [],
-      serviceName: '',
-      serviceDescription: '',
-      servicePrice: 0,
-      timeValue: 0,  // Time value (numeric)
-      timeUnit: 'minutes',  // Time unit (minutes or hours)
       categories: [],
-      selectedCategoryId: null
     };
   },
-  mounted() {
-    this.fetchServices();
-    this.fetchCategories();
-  },
   computed: {
-    // Group services by category
     categoriesWithServices() {
       const categoriesWithServices = [];
       for (let categoryId in this.categories) {
         const category = this.categories[categoryId];
         const servicesInCategory = this.services.filter(service => service.category_id == category.id);
         if (servicesInCategory.length > 0) {
-          categoriesWithServices.push({
-          ...category,
-          services: servicesInCategory });
+          categoriesWithServices.push({ ...category, services: servicesInCategory });
         }
       }
       return categoriesWithServices;
     }
   },
+  mounted() {
+    this.fetchServices();
+    this.fetchCategories();
+  },
   methods: {
-    async fetchServices() {
-      const response = await fetch('http://127.0.0.1:5000/services',
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-          }
-        }
-      );
-      const data = await response.json();
-      if (!response.ok) {
-        alert(data.error);
+    openModal(mode, service = null) {
+      this.modalMode = mode;
+      if (mode === 'edit' || mode === 'view') {
+        this.selectedService = { ...service }; // Clone the service object to avoid mutating the original one
+      } else {
+        this.selectedService = {
+        name: '',
+        description: '',
+        price: 0,
+        category_id: null,
+        time_value: 0, // Reset for new service
+        time_unit: 'minutes', // Reset for new service
+      };
       }
-      else {
+      this.isModalVisible = true; // Show the modal
+    },
+    async fetchServices() {
+      const response = await fetch('http://127.0.0.1:5000/services', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
+      });
+      const data = await response.json();
+      if (response.ok) {
         this.services = data.services;
       }
-      console.log("Services: ", this.services);
     },
     async fetchCategories() {
       const response = await fetch('http://127.0.0.1:5000/categories', {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-        }
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
       });
       const data = await response.json();
-      if (!response.ok) {
-        alert(data.error);
-      }
-      else {
+      if (response.ok) {
         this.categories = data.categories;
-        console.log(this.categories)
       }
     },
-  async addService() {
-    if (this.serviceName && this.serviceDescription && this.servicePrice && this.timeValue && this.selectedCategoryId) {
-      try {
-        const newService = {
-          name: this.serviceName,
-          description: this.serviceDescription,
-          price: this.servicePrice,
-          time_required: `${this.timeValue} ${this.timeUnit}`,
-          category_id: this.selectedCategoryId
-        };
-
-        const response = await fetch('http://127.0.0.1:5000/services', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-          },
-          body: JSON.stringify(newService)
-        });
-
-        if (response.ok) {
-          this.fetchServices();
-          this.resetForm();
-          $('#addServiceModal').modal('hide'); // Close the modal
-        } else {
-          console.error('Error adding service:', response.statusText);
-        }
-      } catch (error) {
-        console.error('Error adding service:', error);
+    async saveService(serviceData) {
+      if (this.modalMode === 'add') {
+        await this.addService(serviceData);
+      } else if (this.modalMode === 'edit') {
+        await this.updateService(serviceData);
       }
-    } else {
-      alert("Please fill out all fields.");
-    }
-  },
-    async deleteService(id) {
-      const response = await fetch(`http://127.0.0.1:5000/services/${id}`, { 
-        method: 'DELETE' ,
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-        }
+      this.isModalVisible = false; // Hide modal after saving
+    },
+    async addService(serviceData) {
+      const response = await fetch('http://127.0.0.1:5000/services', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('access_token')}` },
+        body: JSON.stringify(serviceData)
       });
-      const data = await response.json();
-      if (!response.ok) {
-        alert(data.error);
-      }
-      else {
-        this.fetchServices();
+      if (response.ok) {
+        this.fetchServices(); // Refresh services list
       }
     },
-    resetForm() {
-      this.serviceName = '';
-      this.serviceDescription = '';
-      this.servicePrice = 0;
-      this.timeValue = 0;
-      this.timeUnit = 'minutes';
-      this.selectedCategoryId = null;
-    }
+    async updateService(serviceData) {
+      const response = await fetch(`http://127.0.0.1:5000/services/${serviceData.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('access_token')}` },
+        body: JSON.stringify(serviceData)
+      });
+      if (response.ok) {
+        this.fetchServices(); // Refresh services list
+      }
+    },
+    async deleteService(id) {
+      const response = await fetch(`http://127.0.0.1:5000/services/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
+      });
+      if (response.ok) {
+        this.fetchServices(); // Refresh services list
+      }
+    },
   },
-  
 };
-
 </script>
 
 <style scoped>
-
+/* Add your styles here */
 </style>

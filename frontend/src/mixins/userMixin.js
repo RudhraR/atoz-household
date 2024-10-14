@@ -9,6 +9,15 @@ export default {
     async created() {
       await this.checkAuth();
     },
+    watch: {
+      user(newVal) {
+        if (!newVal) {
+          // If user becomes null, meaning session expired or user is logged out
+          alert('Session expired. Please log in again.');
+          this.logout(); // Call the logout method to clear session
+        }
+      },
+    },
     methods: {
       async checkAuth(){
           const access_token = localStorage.getItem("access_token");
