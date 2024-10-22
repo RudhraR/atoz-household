@@ -5,3 +5,4 @@ class Config:
     SQLALCHEMY_DATABASE_URI = "sqlite:///database.db"
     JWT_SECRET_KEY = "hello"
     RESUME_FOLDER = os.path.join(os.getcwd(), "professional_resume")
+    CATEGORY_IMAGES = os.path.join(os.getcwd(), "category_images")

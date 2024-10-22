@@ -8,7 +8,7 @@ import Categories from '@/views/Categories.vue'
 import Services from '@/views/Services.vue'
 import AdminDashboard from '@/views/AdminDashboard.vue'
 import CustomerDashboard from '@/views/CustomerDashboard.vue'
-
+import Manage_users from '@/views/Manage_users.vue'
 
 const routes = [
 
@@ -56,6 +56,11 @@ const routes = [
     path: '/customer_dashboard',
     name: 'customer_dashboard',
     component: CustomerDashboard
+  },
+  {
+    path: '/manage_users',
+    name: 'manage_users',
+    component: Manage_users
   }
 ]
 

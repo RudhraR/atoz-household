@@ -18,9 +18,10 @@ class User(db.Model):
     #service professional fields
     experience = db.Column(db.String(100), nullable=True)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
-    # services_provided = db.Column(db.String(200), nullable=True)
-    services_provided = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=True)
     resume = db.Column(db.String(255), nullable=True)
+    
+    services_provided = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=True)
+    category = db.relationship('Category', back_populates='professionals_specialization')
     
     def __init__(self, username, email, role, password, address=None, pincode=None, experience=None, services_provided=None, resume=None):
       self.username=username
@@ -43,11 +44,12 @@ class Category(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False, unique=True)
+    categoryImage = db.Column(db.String(255), nullable=True)
     services = db.relationship('Service', back_populates='category', cascade='all, delete')
-    def __init__(self, name):
-
+    professionals_specialization = db.relationship('User', back_populates='category')
+    def __init__(self, name, categoryImage=None):
         self.name = name
-
+        self.categoryImage = categoryImage
 
 class Service(db.Model):
     __tablename__ = 'services'

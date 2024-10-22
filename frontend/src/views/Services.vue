@@ -48,7 +48,7 @@
     </div>
 
     <!-- Reusable Modal for Add/Edit/View -->
-    <service-modal
+    <ServiceModal
       v-if="isModalVisible"
       :service="selectedService"
       :mode="modalMode"

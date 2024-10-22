@@ -44,20 +44,19 @@ export default {
     methods: {
         async register() {
             try {
-                const response = await fetch('http://127.0.0.1:5000/register', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        email: this.email,
-                        password: this.password,
-                        username: this.username,
-                        address: this.address,
-                        pincode: this.pincode,
-                        role: "customer"             
-                    })
-                })
+                const formData = new FormData()
+              formData.append('email', this.email)
+              formData.append('password', this.password)
+              formData.append('username', this.username)
+              formData.append('address', this.address)
+              formData.append('pincode', this.pincode)
+          
+              formData.append('role', "customer")
+              
+              const response = await fetch('http://127.0.0.1:5000/register', {
+                  method: 'POST',
+                  body: formData
+        })
                 const data = await response.json()
                 console.log("Data: ", data)
                 if (!response.ok) {

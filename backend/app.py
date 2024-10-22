@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request, send_file
+from flask import Flask, jsonify, request, send_file, send_from_directory
 from config import Config
 from models import *
 from flask_cors import CORS
@@ -146,8 +146,21 @@ def create_category():
     current_user = get_jwt_identity()
     if current_user["role"] != "admin":
         return jsonify({"message":"You are not authorized to access this resource"}), 403
-    data = request.json
-    new_category = Category(name=data['name'])
+    name = request.form.get('name')
+    image = request.files.get('categoryImage')
+        
+    if not name or not image:
+        return jsonify({"error":"All fields required"}), 400   
+    category = Category.query.filter_by(name=name).first()
+    if category:
+        return jsonify({"error":"Category already exists"}), 400
+        
+    image_filename = secure_filename(name + ".jpg")
+    image_path = os.path.join(app.config["CATEGORY_IMAGES"], image_filename)
+    os.makedirs(os.path.dirname(image_path), exist_ok=True)
+    image.save(image_path)
+      
+    new_category = Category(name=name, categoryImage=image_filename)
     db.session.add(new_category)
     db.session.commit()
     return jsonify({'message': 'Category created'}), 201
@@ -155,8 +168,21 @@ def create_category():
 @app.route('/categories', methods=['GET'])
 def get_categories():
     categories = Category.query.all()
-    categories_data = [{'id': category.id, 'name': category.name} for category in categories]
+    categories_data = [{'id': category.id, 'name': category.name, 
+                        'categoryImage': category.categoryImage,
+                        'imagePath': "http://127.0.0.1:5000/images/" + (category.categoryImage if category.categoryImage else "default_image.jpg")} 
+                       for category in categories]
+                        # 'imagePath': category.categoryImage ? os.path.join(app.config["CATEGORY_IMAGES"], category.categoryImage) : null} 
+                       
     return jsonify({"message":"Categories found","categories":categories_data}), 200
+
+# Define a route to serve category images
+@app.route('/images/<filename>')
+def serve_image(filename):
+    image_directory = app.config["CATEGORY_IMAGES"] # Adjust this to match your path
+    if not os.path.isfile(os.path.join(image_directory, filename)):
+        return null
+    return send_from_directory(image_directory, filename)
 
 @app.route('/categories/<int:id>', methods=['PUT'])
 @jwt_required()
@@ -164,9 +190,21 @@ def update_category(id):
     current_user = get_jwt_identity()
     if current_user["role"] != "admin":
         return jsonify({"message":"You are not authorized to access this resource"}), 403
-    data = request.json
+    name = request.form.get('name')
+    image = request.files.get('categoryImage')
     category = Category.query.filter_by(id=id).first()
-    category.name = data['name']
+    category.name = name
+    
+    if image:
+        if category.categoryImage:
+            os.remove(app.config["CATEGORY_IMAGES"] + "/" + category.categoryImage)
+    
+        image_filename = secure_filename(name + ".jpg")
+        image_path = os.path.join(app.config["CATEGORY_IMAGES"], image_filename)
+        os.makedirs(os.path.dirname(image_path), exist_ok=True)
+        image.save(image_path)
+        category.categoryImage = image_filename
+    db.session.add(category)
     db.session.commit()
     return jsonify({'message': 'Category updated'})
 
@@ -182,6 +220,8 @@ def delete_category(id):
     
     try:
         db.session.delete(category) 
+        if category.categoryImage:
+            os.remove(app.config["CATEGORY_IMAGES"] + "/" + category.categoryImage)
         db.session.commit()
         return jsonify({"message":"Category deleted successfully"}), 200
     except Exception as e:
@@ -194,10 +234,22 @@ def get_services_by_category(category_id):
     services_data = [{'id': service.id, 'name': service.name } for service in category.services]
     return jsonify({'services': services_data})
 
+#Fetch one category details
+@app.route('/categories/<int:id>', methods=['GET'])
+def get_category(id):
+    category = Category.query.get_or_404(id)
+    return jsonify({'category': {
+        'id': category.id,
+        'name': category.name,
+        'categoryImage': category.categoryImage
+    }})
 # Routes for Services
 @app.route('/services', methods=['POST'])
 @jwt_required() 
 def create_service():
+    current_user = get_jwt_identity()
+    if current_user["role"] != "admin":
+        return jsonify({"message":"You are not authorized to access this resource"}), 403
     data = request.json
     new_service = Service(
         name=data['name'],
@@ -229,6 +281,9 @@ def get_services():
 @app.route('/services/<int:id>', methods=['PUT'])
 @jwt_required() 
 def update_service(id):
+    current_user = get_jwt_identity()
+    if current_user["role"] != "admin":
+        return jsonify({"message":"You are not authorized to access this resource"}), 403
     data = request.json
     service = Service.query.get_or_404(id)
     service.name = data['name']
@@ -242,10 +297,112 @@ def update_service(id):
 @app.route('/services/<int:id>', methods=['DELETE'])
 @jwt_required()
 def delete_service(id):
+    current_user = get_jwt_identity()
+    if current_user["role"] != "admin":
+        return jsonify({"message":"You are not authorized to access this resource"}), 403
     service = Service.query.get_or_404(id)
     db.session.delete(service)
     db.session.commit()
     return jsonify({'message': 'Service deleted'})
+
+# Return list of all professionals
+@app.route('/professionals', methods=['GET'])
+@jwt_required()
+def get_professionals():
+    current_user = get_jwt_identity()
+    if current_user["role"] != "admin":
+        return jsonify({"message":"You are not authorized to access this resource"}), 403
+    available_professionals = User.query.filter_by(role='professional', is_active=True).all()
+    available_professionals_data = []
+    for professional in available_professionals:
+        available_professionals_data.append({
+            'id': professional.id,
+            'username': professional.username,
+            'email': professional.email,
+            'services_provided': professional.category.name,
+            'resume': professional.resume,
+            'experience': professional.experience,
+            'address': professional.address,
+            'pincode': professional.pincode
+        })
+    
+    new_professionals = User.query.filter_by(role='professional', is_active=False).all()
+    new_professionals_data = []
+    for professional in new_professionals:
+        new_professionals_data.append({
+            'id': professional.id,
+            'username': professional.username,
+            'email': professional.email,
+            'services_provided': professional.category.name,
+            'resume': professional.resume,
+            'experience': professional.experience,
+            'address': professional.address,
+            'pincode': professional.pincode
+        })
+    return jsonify({'new_professionals': new_professionals_data, 'available_professionals': available_professionals_data}), 200
+
+# Approve/reject new professional
+@app.route('/professionals/<int:id>', methods=['PUT', 'DELETE'])
+@jwt_required()
+def approve_or_delete_professionals(id):
+    current_user = get_jwt_identity()
+    if current_user["role"] != "admin":
+        return jsonify({"message":"You are not authorized to access this resource"}), 403
+    professional = User.query.filter_by(id=id).first() 
+    if request.method == 'PUT':
+        professional.is_active = True
+        db.session.commit()
+        return jsonify({'message': 'Professional approved'})
+    elif request.method == 'DELETE':
+        db.session.delete(professional)
+        os.remove(app.config["RESUME_FOLDER"] + "/" + professional.resume)
+        db.session.commit()
+        return jsonify({'message': 'Professional rejected'})
+    return jsonify({'message': 'Invalid request'})
+
+#View resume pdf of professionals
+@app.route("/view_resume/<int:id>", methods=["GET"])
+def view_catalogue(id):
+    professional = User.query.filter_by(id=id).first() 
+    if not professional:
+        return jsonify({"error":"professional not found"}), 404
+    pdf = professional.resume
+    pdf_path = os.path.join(app.config["RESUME_FOLDER"], pdf)
+    return send_file(pdf_path, as_attachment=False)
+
+
+# Return list of all customers
+@app.route('/customers', methods=['GET'])
+@jwt_required()
+def get_customers():
+    current_user = get_jwt_identity()
+    if current_user["role"] != "admin":
+        return jsonify({"message":"You are not authorized to access this resource"}), 403
+    customers = User.query.filter_by(role='customer').all()
+    customer_data = []
+    for customer in customers:
+        customer_data.append({
+            'id': customer.id,
+            'username': customer.username,
+            'email': customer.email,
+            'address': customer.address,
+            'pincode': customer.pincode
+        })
+    return jsonify({'customers': customer_data}), 200
+
+@app.route('/customers/<int:id>', methods=['DELETE'])
+@jwt_required()
+def delete_user(id):
+    current_user = get_jwt_identity()
+    if current_user["role"] != "admin":
+        return jsonify({"message":"You are not authorized to access this resource"}), 403
+    user = User.query.filter_by(id=id).first()
+    if user:
+        db.session.delete(user)
+        db.session.commit()
+        return jsonify({'message': 'User deleted'})
+    else:
+        return jsonify({'message': 'User not found'}), 404
 
 if __name__ == "__main__":
     app.run(debug=True)

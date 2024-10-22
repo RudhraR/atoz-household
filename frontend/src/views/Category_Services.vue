@@ -2,28 +2,31 @@
     <div>
       <div v-if= "user">
       <br><h5 style="text-align: left;">
-        <i>&nbsp; Welcome, {{ this.user.username }}!  </i>
+        <i>&nbsp; Welcome, {{ this.user.username }}! Explore all our services. </i>
       </h5><br> </div>
       <div class="container">
+        <div  v-for="(category) in categoriesWithServices" :key="category.id">
       <!-- Loop through each category -->
         <!-- Category Card -->
-        <div class="card">
-          <h5 class="card-header text-white bg-secondary">Looking for?</h5>
+        <div class="card" v-if="category.services.length > 0">
+          <h5 class="card-header text-white bg-secondary">{{ category.name }}</h5>
           <div class="card-body">
             <div class="row">
             <!-- Loop through services under each category -->
-            <div v-for="category in categories" :key="category.id" class="col-sm-2">
-              <div class="card"> <!-- style="cursor: pointer;" @click="openModal('view', service)"> -->  
-                <img class="card-img-top" :src="category.imagePath" width="100" height="150">
+            <div v-for="service in category.services" :key="service.id" class="col-sm-2">
+              <div class="card"  style="cursor: pointer;" @click="openModal('view', service)">
+                <img class="card-img-top" src="../assets/default_image.jpg" >
               <div class="card-body">
-                <h6 class="card-title">{{ category.name }}</h6>
-                
+                <h6 class="card-title">{{ service.name }}</h6>
+                <p class="card-text">Price: ${{ service.price }}</p>
+                <p class="card-text text-muted small"><i>Click to book service</i></p>
               </div>
             </div>
           </div>
           
         </div>
       </div>
+    </div>
     </div>
   </div>
   
@@ -44,7 +47,7 @@
 import userMixin from '@/mixins/userMixin';
 import ServiceModal from '@/components/ServiceModal.vue'
   export default {
-    name: 'CustomerDashboard',
+    name: 'Category_Services',
     mixins: [userMixin],
     components: {
       ServiceModal
@@ -104,7 +107,6 @@ import ServiceModal from '@/components/ServiceModal.vue'
         }
         else {
         this.categories = data.categories
-        console.log(this.categories)
         }
     },
     async fetchServices() {
