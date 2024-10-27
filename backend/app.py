@@ -170,9 +170,9 @@ def get_categories():
     categories = Category.query.all()
     categories_data = [{'id': category.id, 'name': category.name, 
                         'categoryImage': category.categoryImage,
-                        'imagePath': "http://127.0.0.1:5000/images/" + (category.categoryImage if category.categoryImage else "default_image.jpg")} 
+                        'services': [service.name for service in category.services]
+                        } 
                        for category in categories]
-                        # 'imagePath': category.categoryImage ? os.path.join(app.config["CATEGORY_IMAGES"], category.categoryImage) : null} 
                        
     return jsonify({"message":"Categories found","categories":categories_data}), 200
 
@@ -181,7 +181,7 @@ def get_categories():
 def serve_image(filename):
     image_directory = app.config["CATEGORY_IMAGES"] # Adjust this to match your path
     if not os.path.isfile(os.path.join(image_directory, filename)):
-        return null
+        return send_from_directory(image_directory, "default_image.jpg")
     return send_from_directory(image_directory, filename)
 
 @app.route('/categories/<int:id>', methods=['PUT'])
@@ -231,7 +231,9 @@ def delete_category(id):
 @app.route('/categories/<int:category_id>/services', methods=['GET'])
 def get_services_by_category(category_id):
     category = Category.query.get_or_404(category_id)
-    services_data = [{'id': service.id, 'name': service.name } for service in category.services]
+    services_data = [{'id': service.id, 'name': service.name,
+                      'price': service.price, 'time_required': service.time_required,
+                      'category_id': service.category_id} for service in category.services]
     return jsonify({'services': services_data})
 
 #Fetch one category details

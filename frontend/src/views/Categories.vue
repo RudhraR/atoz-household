@@ -92,7 +92,7 @@
                 <input type="file" id="currentCategoryImage" class="form-control" accept=".jpg" 
                 @change="handleImageUpload" />
                 <i class="text-muted">Current image: 
-                  <span v-if="currentCategoryImage">
+                  <span v-if="currentCategoryImagePath">
                   <img :src="currentCategoryImagePath" width="50" height="50">
                 </span>
                 <span v-else>
@@ -188,7 +188,10 @@ export default {
       if (!response.ok) {
         alert(data.error);
       } else {
-        this.categories = data.categories;
+        this.categories = data.categories.map(category => ({
+    ...category,
+    imagePath: `http://127.0.0.1:5000/images/${category.categoryImage}`
+}));
       }
     },
     async addCategory() {

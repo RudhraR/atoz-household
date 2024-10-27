@@ -1,92 +1,95 @@
 <template>
-    <div>
-      <div v-if= "user">
-      <br><h5 style="text-align: left;">
-        <i>&nbsp; Welcome, {{ this.user.username }}!  </i>
-      </h5><br> </div>
-      <div class="container">
+  <div>
+    <div v-if="user">
+      <br>
+      <h5 style="text-align: left;">
+        <i>&nbsp; Welcome, {{ this.user.username }}! </i>
+      </h5><br>
+    </div>
+    <div class="container">
       <!-- Loop through each category -->
-        <!-- Category Card -->
-        <div class="card">
-          <h5 class="card-header text-white bg-secondary">Looking for?</h5>
-          <div class="card-body">
-            <div class="row">
+      <!-- Category Card -->
+      <div class="card">
+        <h5 class="card-header text-white bg-secondary">Looking for?</h5>
+        <div class="card-body">
+          <div class="row">
             <!-- Loop through services under each category -->
-            <div v-for="category in categories" :key="category.id" class="col-sm-2">
-              <div class="card"> <!-- style="cursor: pointer;" @click="openModal('view', service)"> -->  
+            <div v-for="category in categoriesWithServices" :key="category.id" class="col-sm-2">
+
+              <div class="card" @click="setCurrentCategory(category)" style="cursor: pointer;" data-bs-toggle="modal"
+                data-bs-target="#viewCategoryModal">
                 <img class="card-img-top" :src="category.imagePath" width="100" height="150">
-              <div class="card-body">
-                <h6 class="card-title">{{ category.name }}</h6>
-                
+                <div class="card-body">
+                  <h6 class="card-title">{{ category.name }}</h6>
+                </div>
               </div>
+
             </div>
+
           </div>
-          
         </div>
       </div>
     </div>
-  </div>
-  
-  <service-modal
-      v-if="isModalVisible"
-      :service="selectedService"
-      :mode="modalMode"
-      :user="this.user"
-      @close="isModalVisible = false"
-      @save="saveService"
-      :categories="categories"  
-    />
 
-</div>
-  </template>
-  
-  <script>
+    <!-- Bootstrap Modal for viewing Category details-->
+    <div class="modal fade" id="viewCategoryModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header" style="text-align: center; width: 100%;">
+            <h5 class="modal-title">Available services in this category</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row" v-if="currentCategoryServices.length > 0">
+              <div v-for="service in currentCategoryServices" :key="service.id" class="col-sm-4">
+                <div class="card">
+                  <h5 class="card-header">{{ service.name }}</h5>
+                  <div class="card-body">
+                    <p class="card-text"><b>Price: </b> 
+                      <i class="text-muted">Rs.{{ service.price }}</i></p>
+                    <p class="card-text"><b>Time Required:</b> <br>
+                      <i class="text-muted">{{ service.time_required }} </i></p>
+                  </div>
+                  <div class="card-footer">
+                    <button class="btn btn-primary">Book Service</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+  </div>
+</template>
+
+<script>
 import userMixin from '@/mixins/userMixin';
-import ServiceModal from '@/components/ServiceModal.vue'
-  export default {
-    name: 'CustomerDashboard',
-    mixins: [userMixin],
-    components: {
-      ServiceModal
-    },
-    data() {
+
+export default {
+  name: 'CustomerDashboard',
+  mixins: [userMixin],
+
+  data() {
     return {
-      services: [],
+      currentCategoryServices: [],
       categories: [],
-      isModalVisible: false,
-      selectedService: {
-      name: '',
-      description: '',
-      price: 0,
-      category_id: null,
-      time_value: 0, // Initialize time value for new service
-      time_unit: 'minutes', // Initialize time unit for new service
-    },
-      modalMode:'view'
+      currentCategory: []
     };
   },
   computed: {
-    // Group services by category
+    // Computed property to filter categories with services
     categoriesWithServices() {
-      const categoriesWithServices = [];
-
-      // Loop over each category and gather services that belong to it
-      this.categories.forEach(category => {
-        const servicesInCategory = this.services.filter(service => service.category_id === category.id);
-
-        // Push category with its services into the final array
-        categoriesWithServices.push({
-          ...category,
-          services: servicesInCategory
-        });
-      });
-
-      return categoriesWithServices;
+      return this.categories.filter(category => category.services && category.services.length > 0);
     }
   },
-  created() {
-    this.fetchCategories();
-    this.fetchServices();
+  async mounted() {
+    await this.fetchCategories();
   },
   methods: {
     async fetchCategories() {
@@ -97,44 +100,42 @@ import ServiceModal from '@/components/ServiceModal.vue'
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`
         }
       });
-        const data = await response.json()
-        
-        if (!response.ok) {
-            alert(data.error)
-        }
-        else {
-        this.categories = data.categories
+      const data = await response.json()
+
+      if (!response.ok) {
+        alert(data.error)
+      }
+      else {
+        this.categories = data.categories.map(category => ({
+          ...category,
+          imagePath: `http://127.0.0.1:5000/images/${category.categoryImage}`
+        }));
         console.log(this.categories)
-        }
-    },
-    async fetchServices() {
-      const response = await fetch('http://127.0.0.1:5000/services',
-          {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-            }
-          }
-        );
-        const data = await response.json();
-        if (!response.ok) {
-          alert(data.error);
-        }
-        else {
-          this.services = data.services;
-        }
+      }
     },
 
-    openModal(mode, service = null) {
-      this.modalMode = mode;
-      this.selectedService = { ...service }; // Clone the service object to avoid mutating the original one
-      this.isModalVisible = true; // Show the modal
-    }
-  } 
-  };
-  </script>
-  
-  <style scoped>
-  </style>
-  
+    async setCurrentCategory(category) {
+      this.currentCategory = category.name;
+      try {
+        const response = await fetch(`http://127.0.0.1:5000/categories/${category.id}/services`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+          }
+        });
+        const data = await response.json();
+        this.currentCategoryServices = data.services;
+      }
+      catch (error) {
+        alert(error)
+      }
+
+
+    },
+
+  }
+};
+</script>
+
+<style scoped></style>
