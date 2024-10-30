@@ -50,7 +50,7 @@ def register():
     password = request.form.get("password")
     address = request.form.get('address')
     pincode = request.form.get('pincode')
-
+    mobile = request.form.get('mobile')
     if not username or not email or not password or not role or not address or not pincode:
         return jsonify({"error":"All fields required"}), 400
     
@@ -75,11 +75,11 @@ def register():
     try:
         if role == 'professional':
             user = User(username=username, email=email, role=role, password=password, 
-                    address=address, pincode=pincode, experience=experience, 
+                    address=address, pincode=pincode, mobile=mobile, experience=experience, 
                     services_provided=services_provided, resume=pdf_filename)
         else:
              user = User(username=username, email=email, role=role, password=password, 
-                    address=address, pincode=pincode)
+                    address=address, pincode=pincode, mobile=mobile)
         db.session.add(user)
         db.session.commit()
         return jsonify({"message":"User created successfully"}), 201
@@ -130,7 +130,8 @@ def getuserdata():
     if not user:
         return jsonify({"error":"User not found"}), 404
     
-    userdata = {"username":user.username, "email":user.email, "role":user.role}
+    userdata = {"id":user.id, "username":user.username, "email":user.email, "role":user.role,
+                "address":user.address, "pincode":user.pincode, "mobile": user.mobile}
     return jsonify({"message":"User found","user":userdata}), 200
 
 @app.route("/logout", methods=["GET", "POST"])
@@ -405,6 +406,50 @@ def delete_user(id):
         return jsonify({'message': 'User deleted'})
     else:
         return jsonify({'message': 'User not found'}), 404
+
+
+# Create a route to book a service request
+@app.route('/service_requests', methods=['POST'])
+def create_service_request():
+    data = request.get_json()
+    
+    # Validate input
+    # if not all(key in data for key in ('service_id', 'customer_id')):
+    #     return jsonify({'error': 'Missing fields in request data'}), 400
+    
+    service_request = ServiceRequest(
+        service_id=data['service_id'],
+        customer_id=data['customer_id'],
+        professional_id=data.get('professional_id'),  
+        date_of_request=datetime.now(),   
+        date_of_completion=None,
+        service_status="requested",
+        remarks=""
+    )
+    try:
+        db.session.add(service_request)
+        db.session.commit()
+    except Exception as e: 
+        return jsonify({'error': str(e)}), 500
+
+
+    return jsonify({'message': 'Service request created successfully', 'service_request_id': service_request.id}), 201
+
+#get professionals by their category
+@app.route('/professionals_by_category/<int:category_id>', methods=['GET'])
+def get_professionals_by_category(category_id):
+    professionals = User.query.filter_by(role='professional', services_provided=category_id).all()
+    professional_data = []
+    for professional in professionals:
+        professional_data.append({
+            'id': professional.id,
+            'username': professional.username,
+            'email': professional.email,
+            'services_provided': professional.category.name,
+            'experience': professional.experience,
+            'pincode': professional.pincode
+        })
+    return jsonify({'professionals': professional_data}), 200
 
 if __name__ == "__main__":
     app.run(debug=True)

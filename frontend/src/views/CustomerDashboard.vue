@@ -3,19 +3,16 @@
     <div v-if="user">
       <br>
       <h5 style="text-align: left;">
-        <i>&nbsp; Welcome, {{ this.user.username }}! </i>
+        <i>&nbsp; Welcome, {{ user.username }}! </i>
       </h5><br>
     </div>
     <div class="container">
       <!-- Loop through each category -->
-      <!-- Category Card -->
       <div class="card">
         <h5 class="card-header text-white bg-secondary">Looking for?</h5>
         <div class="card-body">
           <div class="row">
-            <!-- Loop through services under each category -->
             <div v-for="category in categoriesWithServices" :key="category.id" class="col-sm-2">
-
               <div class="card" @click="setCurrentCategory(category)" style="cursor: pointer;" data-bs-toggle="modal"
                 data-bs-target="#viewCategoryModal">
                 <img class="card-img-top" :src="category.imagePath" width="100" height="150">
@@ -23,9 +20,7 @@
                   <h6 class="card-title">{{ category.name }}</h6>
                 </div>
               </div>
-
             </div>
-
           </div>
         </div>
       </div>
@@ -51,7 +46,8 @@
                       <i class="text-muted">{{ service.time_required }} </i></p>
                   </div>
                   <div class="card-footer">
-                    <button class="btn btn-primary">Book Service</button>
+                    <!-- Change: Updated click event to openBookingModal method -->
+                    <button class="btn btn-primary" @click="openBookingModal(service)">Book Service</button>
                   </div>
                 </div>
               </div>
@@ -64,22 +60,45 @@
       </div>
     </div>
 
-
+    <!-- Change: New modal for Booking Service Request -->
+    <div class="modal fade" id="bookServiceModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Book a Service</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <BookServiceRequest 
+              :serviceDetails="currentService" 
+              :customerDetails="user" 
+              v-if="isModalVisible" 
+              @close="closeBookingModal"  
+            />
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
 import userMixin from '@/mixins/userMixin';
+import BookServiceRequest from './BookServiceRequest.vue';
 
 export default {
   name: 'CustomerDashboard',
   mixins: [userMixin],
-
+  components: {
+    BookServiceRequest,
+  },
   data() {
     return {
       currentCategoryServices: [],
       categories: [],
-      currentCategory: []
+      currentCategory: [],
+      currentService: null, // To store the currently selected service
+      isModalVisible: false, // State to control modal visibility
     };
   },
   computed: {
@@ -104,8 +123,7 @@ export default {
 
       if (!response.ok) {
         alert(data.error)
-      }
-      else {
+      } else {
         this.categories = data.categories.map(category => ({
           ...category,
           imagePath: `http://127.0.0.1:5000/images/${category.categoryImage}`
@@ -130,10 +148,21 @@ export default {
       catch (error) {
         alert(error)
       }
-
-
     },
 
+    openBookingModal(service) {
+      this.currentService = service; // Set the selected service
+      this.isModalVisible = true; // Open the booking modal
+      $('#viewCategoryModal').modal('hide');
+      $('#bookServiceModal').modal('show'); // Show the modal using jQuery
+    },
+
+    closeBookingModal() {
+      this.isModalVisible = false; // Close the modal
+      $('#bookServiceModal').modal('hide'); // Hide the modal using jQuery
+      this.currentService = null;
+      
+    },
   }
 };
 </script>

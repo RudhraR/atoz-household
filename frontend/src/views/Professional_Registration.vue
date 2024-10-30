@@ -57,6 +57,13 @@
         <input v-model="pincode" type="text" class="form-control" placeholder="Pincode" required/>
       </div>
       </div>
+      <div class="form-group mb-3 row">
+        <label for="mobile" class="col-sm-3 col-form-label">Mobile</label>
+        <div class="col-sm-9">
+        <input v-model="mobile" type="tel" id="mobile" min="10" max="10"
+        class="form-control" placeholder="Mobile number" required/>
+      </div>
+      </div>
       <button class="btn btn-primary" @click="register">Submit</button>
       
   </div></div>
@@ -77,6 +84,7 @@ export default {
           pincode:"",
           services_provided:null,
           experience:"",
+          mobile:"",
           role:"", 
           resume: null,
           categories: []
@@ -111,6 +119,7 @@ export default {
               formData.append('username', this.username)
               formData.append('address', this.address)
               formData.append('pincode', this.pincode)
+              formData.append('mobile', this.mobile)
               formData.append('experience', this.experience)
               formData.append('resume', this.resume)
               formData.append('services_provided', this.services_provided)

@@ -14,6 +14,7 @@ class User(db.Model):
     lastLoggedIn =  db.Column(db.DateTime, default=datetime.now())
     address = db.Column(db.String, nullable=True)
     pincode = db.Column(db.String(6), nullable=True)
+    mobile = db.Column(db.String(10), nullable=True)
     
     #service professional fields
     experience = db.Column(db.String(100), nullable=True)
@@ -22,14 +23,18 @@ class User(db.Model):
     
     services_provided = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=True)
     category = db.relationship('Category', back_populates='professionals_specialization')
+    service_requests_as_customer = db.relationship('ServiceRequest', foreign_keys='ServiceRequest.customer_id', back_populates='customer')
+    service_requests_as_professional = db.relationship('ServiceRequest', foreign_keys='ServiceRequest.professional_id', back_populates='professional')
     
-    def __init__(self, username, email, role, password, address=None, pincode=None, experience=None, services_provided=None, resume=None):
+    def __init__(self, username, email, role, password, address=None, pincode=None, mobile=None, 
+                 experience=None, services_provided=None, resume=None):
       self.username=username
       self.email=email  
       self.role=role
       self.password = bcrypt.generate_password_hash(password).decode('utf-8')
       self.address = address
       self.pincode = pincode
+      self.mobile = mobile
       self.experience = experience
       self.services_provided = services_provided
       self.resume = resume
@@ -61,6 +66,7 @@ class Service(db.Model):
     time_required = db.Column(db.String, nullable=False)  
     category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=False)
     category = db.relationship('Category', back_populates='services')
+    service_requests = db.relationship('ServiceRequest', back_populates='service')
     
     def __init__(self, name, description, price, time_required, category_id):
         self.name = name
@@ -68,3 +74,37 @@ class Service(db.Model):
         self.price = price
         self.time_required = time_required
         self.category_id = category_id
+
+    
+
+class ServiceRequest(db.Model):
+    __tablename__ = 'service_requests'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    service_id = db.Column(db.Integer, db.ForeignKey('services.id'), nullable=False)
+    customer_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)  # Foreign key referencing User
+    professional_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)  # Foreign key referencing User
+    
+    date_of_request = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    date_of_completion = db.Column(db.DateTime, nullable=True)
+    
+    # Using Enum for service_status to restrict values
+    service_status = db.Column(db.String(20), default="requested", nullable=False)  # 'requested', 'assigned', 'closed'
+    
+    remarks = db.Column(db.Text, nullable=True)
+
+    # Relationships
+    service = db.relationship('Service', back_populates='service_requests')
+    customer = db.relationship('User', foreign_keys=[customer_id], back_populates='service_requests_as_customer')
+    professional = db.relationship('User', foreign_keys=[professional_id], back_populates='service_requests_as_professional')
+    
+    def __init__(self, service_id, customer_id, professional_id=None, 
+                 date_of_request=datetime.utcnow(), date_of_completion=None, 
+                 service_status="requested", remarks=None):
+        self.service_id = service_id
+        self.customer_id = customer_id
+        self.professional_id = professional_id
+        self.date_of_request = date_of_request
+        self.date_of_completion = date_of_completion
+        self.service_status = service_status
+        self.remarks = remarks

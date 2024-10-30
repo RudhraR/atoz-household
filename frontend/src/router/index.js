@@ -9,6 +9,7 @@ import Services from '@/views/Services.vue'
 import AdminDashboard from '@/views/AdminDashboard.vue'
 import CustomerDashboard from '@/views/CustomerDashboard.vue'
 import Manage_users from '@/views/Manage_users.vue'
+import BookServiceRequest from '@/views/BookServiceRequest.vue'
 
 const routes = [
 
@@ -61,6 +62,11 @@ const routes = [
     path: '/manage_users',
     name: 'manage_users',
     component: Manage_users
+  },
+  {
+    path: '/book_service_request',
+    name: 'book_service_request',
+    component: BookServiceRequest
   }
 ]
 

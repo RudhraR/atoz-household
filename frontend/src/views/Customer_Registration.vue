@@ -17,6 +17,9 @@
         <div class="form-group mb-3">
           <input v-model="pincode" type="text" class="form-control" placeholder="Pincode" required/>
         </div>
+        <div class="form-group mb-3">
+          <input v-model="mobile" type="tel" min="10" max="10" class="form-control" placeholder="Mobile number" required/>
+        </div>
         <button class="btn btn-primary w-100" @click="register">Submit</button>
         
     </div>
@@ -35,6 +38,7 @@ export default {
             username:"",
             address:"",
             pincode:"",
+            mobile:"",
             role:""
         }
     },
@@ -50,7 +54,7 @@ export default {
               formData.append('username', this.username)
               formData.append('address', this.address)
               formData.append('pincode', this.pincode)
-          
+              formData.append('mobile', this.mobile)
               formData.append('role', "customer")
               
               const response = await fetch('http://127.0.0.1:5000/register', {
