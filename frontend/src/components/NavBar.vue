@@ -9,15 +9,15 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarText">
           <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-            <li class="nav-item">
+            <li class="nav-item mx-5">
               <router-link class="nav-link" to="/">Home</router-link>
             </li>
              <li class="nav-item"  v-if="this.isLoggedin && this.role === 'admin'">
               <router-link class="nav-link" to="/manage_users">Manage users</router-link>
             </li>
-            <!-- <li class="nav-item"  v-if="this.isLoggedin && this.role === 'admin'">
-              <router-link class="nav-link" to="/services">Manage Services</router-link>
-            </li> --> 
+            <!-- <li class="nav-item"  v-if="this.isLoggedin && this.role === 'customer'">
+              <router-link class="nav-link" to="/view_service_requests">My Service Requests</router-link>
+            </li>  -->
             </ul>
           <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
             

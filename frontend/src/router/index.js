@@ -1,15 +1,16 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import LoginPage from '@/views/LoginPage.vue'
-import Customer_Registration from '@/views/Customer_Registration.vue'
-import Professional_Registration from '@/views/Professional_Registration.vue'
-import Dashboard from '@/views/Dashboard.vue'
-import Categories from '@/views/Categories.vue'
-import Services from '@/views/Services.vue'
-import AdminDashboard from '@/views/AdminDashboard.vue'
-import CustomerDashboard from '@/views/CustomerDashboard.vue'
-import Manage_users from '@/views/Manage_users.vue'
-import BookServiceRequest from '@/views/BookServiceRequest.vue'
+import Customer_Registration from '@/views/customer/Customer_Registration.vue'
+import Professional_Registration from '@/views/professional/Professional_Registration.vue'
+import Dashboard from '@/views/professional/Dashboard.vue'
+import Categories from '@/views/admin/Categories.vue'
+import Services from '@/views/admin/Services.vue'
+import AdminDashboard from '@/views/admin/AdminDashboard.vue'
+import CustomerDashboard from '@/views/customer/CustomerDashboard.vue'
+import Manage_users from '@/views/admin/Manage_users.vue'
+import BookServiceRequest from '@/views/customer/BookServiceRequest.vue'
+import ViewServiceRequests from '@/components/ViewServiceRequests.vue'
 
 const routes = [
 
@@ -67,6 +68,11 @@ const routes = [
     path: '/book_service_request',
     name: 'book_service_request',
     component: BookServiceRequest
+  },
+  {
+    path: '/view_service_requests',
+    name: 'view_service_requests',
+    component: ViewServiceRequests
   }
 ]
 

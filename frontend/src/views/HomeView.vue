@@ -15,9 +15,9 @@
 import userMixin from '@/mixins/userMixin';
 import NavBar from '@/components/NavBar.vue'
 import AuthCard from './AuthCard.vue';
-import Dashboard from './Dashboard.vue';
-import AdminDashboard from './AdminDashboard.vue';
-import CustomerDashboard from './CustomerDashboard.vue';
+import Dashboard from './professional/Dashboard.vue';
+import AdminDashboard from './admin/AdminDashboard.vue';
+import CustomerDashboard from './customer/CustomerDashboard.vue';
 
 export default {
   name: 'HomeView',

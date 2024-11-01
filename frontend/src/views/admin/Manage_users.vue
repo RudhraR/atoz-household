@@ -2,8 +2,44 @@
     <NavBar />
     <div class="container" style="margin-top: 20px;" v-if="role == 'admin' && isLoggedin">
         <div class="row">
+            
+            <div class="col-3">
+                <div class="card shadow ">
+                    <h5 class="card-header text-white bg-secondary">All Customers</h5>
+                    <div class="card-body">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th scope="col">#</th>
+                                    <th scope="col">Name</th>
+                                    <th scope="col">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="(customer, index) in all_customers" v-if="all_customers.length > 0"
+                                    :key="customer.id">
+                                    <th scope="row">{{ index + 1 }}</th>
+                                    <td><a @click="openModal('customer', customer)" style="cursor: pointer;"
+                                            class="text-secondary">
+                                            {{ customer.username }}</a>
+                                    </td>
+                                   
+
+                                    <td v-if="role == 'admin'" class="btn-group">                                     
+                                        <button type="button" class="btn btn-sm btn-danger"
+                                            @click="deleteCustomer(customer.id)"> Delete </button>
+                                    </td>
+                                </tr>
+                                <tr v-else>
+                                    <td colspan="4" class="text-muted"><i>No customers found</i></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
             <!-- Show list of active professionals -->
-            <div class="col-sm-5">
+            <div class="col-4">
                 <div class="card shadow ">
                     <h5 class="card-header text-white bg-secondary">Available professionals</h5>
                     <div class="card-body">
@@ -39,8 +75,8 @@
                     </div>
                 </div>
             </div>
-            <div class="col-sm-1"></div>
-            <div class="col-sm-6">
+            
+            <div class="col-5">
                 <div class="card shadow">
                     <h5 class="card-header text-white bg-secondary">New professionals - Requests</h5>
                     <div class="card-body">
@@ -49,7 +85,7 @@
                                 <tr>
                                     <th scope="col">#</th>
                                     <th scope="col">Name</th>
-                                    <th scope="col">Service provided</th>
+                                    
                                     <th scope="col">Resume</th>
                                     <th scope="col">Actions</th>
                                 </tr>
@@ -63,7 +99,7 @@
                                             class="text-secondary">
                                             {{ professional.username }}</a>
                                     </td>
-                                    <td>{{ professional.services_provided }}</td>
+                                    
                                     <td><a :href="`http://127.0.0.1:5000/view_resume/${professional.id}`"
                                             target="_blank">{{ professional.resume }}</a></td>
 
@@ -81,48 +117,17 @@
                         </table>
                     </div>
                 </div>
-            </div>
-        </div>
+           </div>
+        </div> 
         <br>
-        <div class="row">
-            <!-- Show list of all customers -->
-            <div class="col-sm-5">
-                <div class="card shadow ">
-                    <h5 class="card-header text-white bg-secondary">All Customers</h5>
+            
+                <div class="card shadow">
+                    <h5 class="card-header text-white bg-secondary">Service Requests</h5>
                     <div class="card-body">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th scope="col">#</th>
-                                    <th scope="col">Name</th>
-                                    <th scope="col">Email</th>
-                                    <th scope="col">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="(customer, index) in all_customers" v-if="all_customers.length > 0"
-                                    :key="customer.id">
-                                    <th scope="row">{{ index + 1 }}</th>
-                                    <td><a @click="openModal('customer', customer)" style="cursor: pointer;"
-                                            class="text-secondary">
-                                            {{ customer.username }}</a>
-                                    </td>
-                                    <td>{{ customer.email }}</td>
-
-                                    <td v-if="role == 'admin'" class="btn-group">                                     
-                                        <button type="button" class="btn btn-sm btn-danger"
-                                            @click="deleteCustomer(customer.id)"> Delete </button>
-                                    </td>
-                                </tr>
-                                <tr v-else>
-                                    <td colspan="4" class="text-muted"><i>No customers found</i></td>
-                                </tr>
-                            </tbody>
-                        </table>
+                        <ViewServiceRequests />
                     </div>
                 </div>
-            </div>
-        </div>
+           
 
         <UserDetailsModal v-if="isModalVisible" :userDetails="userDetails" :userType="userType"
             @close="isModalVisible = false" />
@@ -133,12 +138,14 @@
 import userMixin from '@/mixins/userMixin';
 import NavBar from '@/components/NavBar.vue'
 import UserDetailsModal from '@/components/UserDetailsModal.vue';
+import ViewServiceRequests from '@/components/ViewServiceRequests.vue';
 
 export default {
     name: "Manage_users",
     components: {
         NavBar,
-        UserDetailsModal
+        UserDetailsModal,
+        ViewServiceRequests
     },
     mixins: [userMixin],
     data() {

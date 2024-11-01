@@ -15,7 +15,7 @@
             <!-- Loop through services under each category -->
             <div v-if="category.services.length > 0" v-for="service in category.services" :key="service.id" class="col-sm-2">
               <div class="card">
-                <img class="card-img-top" src="../assets/default_image.jpg" >
+                <img class="card-img-top" src="../../assets/default_image.jpg" >
               <div class="card-body">
                 <h6 class="card-title">{{ service.name }}</h6>
                 <p class="card-text">Price: ${{ service.price }}</p>

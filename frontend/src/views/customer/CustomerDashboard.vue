@@ -8,7 +8,7 @@
     </div>
     <div class="container">
       <!-- Loop through each category -->
-      <div class="card">
+      <div class="card shadow border-dark">
         <h5 class="card-header text-white bg-secondary">Looking for?</h5>
         <div class="card-body">
           <div class="row">
@@ -79,18 +79,31 @@
         </div>
       </div>
     </div>
+
+    <br><br>
+    <div class="container" v-if="user">
+      <div class="card shadow">
+        <h5 class="card-header bg-dark text-white" style="text-align: left;">Service History</h5>
+        <div class="card-body">
+      <ViewServiceRequests />
+      </div>
+      </div>
+    </div>
+    
   </div>
 </template>
 
 <script>
 import userMixin from '@/mixins/userMixin';
 import BookServiceRequest from './BookServiceRequest.vue';
+import ViewServiceRequests from '@/components/ViewServiceRequests.vue';
 
 export default {
   name: 'CustomerDashboard',
   mixins: [userMixin],
   components: {
     BookServiceRequest,
+    ViewServiceRequests
   },
   data() {
     return {
@@ -154,14 +167,14 @@ export default {
       this.currentService = service; // Set the selected service
       this.isModalVisible = true; // Open the booking modal
       $('#viewCategoryModal').modal('hide');
-      $('#bookServiceModal').modal('show'); // Show the modal using jQuery
+      $('#bookServiceModal').modal('show'); 
     },
 
     closeBookingModal() {
-      this.isModalVisible = false; // Close the modal
-      $('#bookServiceModal').modal('hide'); // Hide the modal using jQuery
+      this.isModalVisible = false; 
+      $('#bookServiceModal').modal('hide'); 
       this.currentService = null;
-      
+      this.$router.go(0);
     },
   }
 };

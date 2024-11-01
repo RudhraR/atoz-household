@@ -451,5 +451,26 @@ def get_professionals_by_category(category_id):
         })
     return jsonify({'professionals': professional_data}), 200
 
+#Get all service requests
+@app.route('/service_requests', methods=['GET'])
+def get_service_requests():
+    service_requests = ServiceRequest.query.all()
+    service_request_data = []
+    for service_request in service_requests:
+        service_request_data.append({
+            'id': service_request.id,
+            'service_name': service_request.service.name,
+            'category': service_request.service.category.name,   
+            'customer_id': service_request.customer_id,
+            'customer_name': service_request.customer.username,
+            'role': service_request.customer.role,
+            'assigned_professional': service_request.professional.username,
+            'booked_on': service_request.date_of_request,
+            'date_of_completion': service_request.date_of_completion,
+            'status': service_request.service_status,
+            'remarks': service_request.remarks
+        })
+    return jsonify({'service_requests': service_request_data}), 200
+
 if __name__ == "__main__":
     app.run(debug=True)

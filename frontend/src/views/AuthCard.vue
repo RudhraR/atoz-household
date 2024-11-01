@@ -32,7 +32,7 @@
   
   <script>
   import LoginPage from './LoginPage.vue';
-  import customer_registration from './Customer_Registration.vue';
+  import customer_registration from './customer/Customer_Registration.vue';
   
   export default {
     name: 'AuthCard',
