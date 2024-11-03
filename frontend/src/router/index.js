@@ -3,7 +3,7 @@ import HomeView from '../views/HomeView.vue'
 import LoginPage from '@/views/LoginPage.vue'
 import Customer_Registration from '@/views/customer/Customer_Registration.vue'
 import Professional_Registration from '@/views/professional/Professional_Registration.vue'
-import Dashboard from '@/views/professional/Dashboard.vue'
+import ProfessionalDashboard from '@/views/professional/ProfessionalDashboard.vue'
 import Categories from '@/views/admin/Categories.vue'
 import Services from '@/views/admin/Services.vue'
 import AdminDashboard from '@/views/admin/AdminDashboard.vue'
@@ -35,9 +35,9 @@ const routes = [
     component: Professional_Registration
   },
   {
-    path: '/dashboard',
-    name: 'dashboard',
-    component: Dashboard
+    path: '/professional_dashboard',
+    name: 'professional_dashboard',
+    component: ProfessionalDashboard
   },
   {
     path: '/categories',

@@ -6,7 +6,7 @@
   <div>
     <CustomerDashboard v-if="user && user.role == 'customer'" />
     <AdminDashboard v-else-if="user && user.role == 'admin'"/>
-    <Dashboard v-else-if="user && user.role == 'professional' && user.is_active"/>
+    <ProfessionalDashboard v-else-if="user && user.role == 'professional' && user.is_active"/>
     <AuthCard v-else />
   </div>
 </template>
@@ -15,7 +15,7 @@
 import userMixin from '@/mixins/userMixin';
 import NavBar from '@/components/NavBar.vue'
 import AuthCard from './AuthCard.vue';
-import Dashboard from './professional/Dashboard.vue';
+import ProfessionalDashboard from './professional/ProfessionalDashboard.vue';
 import AdminDashboard from './admin/AdminDashboard.vue';
 import CustomerDashboard from './customer/CustomerDashboard.vue';
 
@@ -23,7 +23,7 @@ export default {
   name: 'HomeView',
   components: {
     AuthCard,
-    Dashboard,
+    ProfessionalDashboard,
     NavBar,
     AdminDashboard,
     CustomerDashboard

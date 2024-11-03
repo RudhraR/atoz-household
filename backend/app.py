@@ -131,7 +131,7 @@ def getuserdata():
         return jsonify({"error":"User not found"}), 404
     
     userdata = {"id":user.id, "username":user.username, "email":user.email, "role":user.role,
-                "address":user.address, "pincode":user.pincode, "mobile": user.mobile}
+                "address":user.address, "pincode":user.pincode, "mobile": user.mobile, "is_active": user.is_active}
     return jsonify({"message":"User found","user":userdata}), 200
 
 @app.route("/logout", methods=["GET", "POST"])
@@ -464,13 +464,57 @@ def get_service_requests():
             'customer_id': service_request.customer_id,
             'customer_name': service_request.customer.username,
             'role': service_request.customer.role,
+            'professional_id': service_request.professional_id,
             'assigned_professional': service_request.professional.username,
             'booked_on': service_request.date_of_request,
-            'date_of_completion': service_request.date_of_completion,
+            'closed_on': service_request.date_of_completion,
             'status': service_request.service_status,
             'remarks': service_request.remarks
         })
     return jsonify({'service_requests': service_request_data}), 200
+
+#Professional accepting/rejecting service requests
+@app.route('/service_requests/<int:id>/<string:status>', methods=['PUT'])
+def update_service_request(id, status):
+    service_request = ServiceRequest.query.filter_by(id=id).first()
+    if not service_request:
+        return jsonify({'error': 'Service request not found'}), 404
+    if status == 'accepted':
+        service_request.service_status = 'accepted'
+    elif status == 'rejected':
+        service_request.service_status = 'rejected'
+        service_request.date_of_completion = datetime.now()
+    db.session.commit()
+    return jsonify({'message': 'Service request'+status}), 200
+
+#Customer updating service requests
+@app.route('/service_requests/customer/<int:id>/<string:status>', methods=['PUT'])
+def update_service_request_customer(id, status):
+    service_request = ServiceRequest.query.filter_by(id=id).first()
+    if not service_request:
+        return jsonify({'error': 'Service request not found'}), 404
+    if status == 'cancelled':
+        service_request.service_status = 'cancelled'
+        service_request.date_of_completion = datetime.now()
+    elif status == 'completed':
+        service_request.service_status = 'completed'
+        service_request.date_of_completion = datetime.now()
+        service_request.remarks = request.form.get('remarks')
+    db.session.commit()
+    return jsonify({'message': 'Service request '+status}), 200
+
+#Reopen service request
+@app.route('/service_requests/reopen/<int:id>/<int:professional_id>', methods=['PUT'])
+def reopen_service_request(id, professional_id):
+    service_request = ServiceRequest.query.filter_by(id=id).first()
+    if not service_request:
+        return jsonify({'error': 'Service request not found'}), 404
+    service_request.service_status = 'requested'
+    service_request.date_of_request = datetime.now()
+    service_request.date_of_completion = None
+    service_request.professional_id = professional_id   
+    db.session.commit()
+    return jsonify({'message': 'Service request reopened'}), 200
 
 if __name__ == "__main__":
     app.run(debug=True)
