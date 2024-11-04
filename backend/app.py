@@ -134,6 +134,30 @@ def getuserdata():
                 "address":user.address, "pincode":user.pincode, "mobile": user.mobile, "is_active": user.is_active}
     return jsonify({"message":"User found","user":userdata}), 200
 
+
+# Profile update
+@app.route('/updateProfile', methods=['POST'])
+@jwt_required()
+def update_profile():
+    current_user = get_jwt_identity()
+    user = User.query.filter_by(id=current_user['id']).first()
+    if not user:
+        return jsonify({"error":"User not found"}), 404
+    print("Data:",request.form.get('username'), request.form.get('address'), request.form.get('pincode'))
+    user.username = request.form.get('username')
+    # user.email = request.form.get('email')
+    # user.role = request.form.get('role')
+    if(request.form.get('password') != ''):
+        password = request.form.get('password')
+        user.password = bcrypt.generate_password_hash(password).decode('utf-8')
+    user.address = request.form.get('address')
+    user.pincode = request.form.get('pincode')
+    user.mobile = request.form.get('mobile')
+    
+    db.session.commit()
+    return jsonify({"message":"Profile updated successfully"}), 200
+    
+
 @app.route("/logout", methods=["GET", "POST"])
 @jwt_required()
 def logout():
@@ -171,7 +195,8 @@ def get_categories():
     categories = Category.query.all()
     categories_data = [{'id': category.id, 'name': category.name, 
                         'categoryImage': category.categoryImage,
-                        'services': [service.name for service in category.services]
+                        'services': [service.name for service in category.services],
+                        'professionals': [professional.username for professional in category.professionals_specialization],
                         } 
                        for category in categories]
                        
@@ -237,6 +262,19 @@ def get_services_by_category(category_id):
                       'category_id': service.category_id} for service in category.services]
     return jsonify({'services': services_data})
 
+#fetch one service details
+@app.route('/service/<int:id>', methods=['GET'])
+def get_service(id):
+    service = Service.query.get_or_404(id)
+    service_data = {
+        'id': service.id,
+        'name': service.name,
+        'description': service.description,
+        'price': service.price,
+        'time_required': service.time_required,
+        'category_id': service.category_id
+    }
+    return jsonify({"message":"Service found","service":service_data}), 200
 #Fetch one category details
 @app.route('/categories/<int:id>', methods=['GET'])
 def get_category(id):
@@ -421,10 +459,11 @@ def create_service_request():
         service_id=data['service_id'],
         customer_id=data['customer_id'],
         professional_id=data.get('professional_id'),  
-        date_of_request=datetime.now(),   
+        date_of_request=datetime.fromisoformat(data.get('date_of_request')),
         date_of_completion=None,
-        service_status="requested",
-        remarks=""
+        service_status=data.get('status'),
+        remarks="",
+        rebooked=data.get('rebooked')
     )
     try:
         db.session.add(service_request)
@@ -460,7 +499,11 @@ def get_service_requests():
         service_request_data.append({
             'id': service_request.id,
             'service_name': service_request.service.name,
+            'service_id': service_request.service_id,
+            'price': service_request.service.price,
+            'time_required': service_request.service.time_required,
             'category': service_request.service.category.name,   
+            'category_id': service_request.service.category_id,
             'customer_id': service_request.customer_id,
             'customer_name': service_request.customer.username,
             'role': service_request.customer.role,
@@ -469,8 +512,10 @@ def get_service_requests():
             'booked_on': service_request.date_of_request,
             'closed_on': service_request.date_of_completion,
             'status': service_request.service_status,
-            'remarks': service_request.remarks
+            'remarks': service_request.remarks,
+            'rebooked': service_request.rebooked
         })
+        
     return jsonify({'service_requests': service_request_data}), 200
 
 #Professional accepting/rejecting service requests
@@ -503,18 +548,27 @@ def update_service_request_customer(id, status):
     db.session.commit()
     return jsonify({'message': 'Service request '+status}), 200
 
-#Reopen service request
-@app.route('/service_requests/reopen/<int:id>/<int:professional_id>', methods=['PUT'])
-def reopen_service_request(id, professional_id):
+@app.route('/service_requests/rebook/<int:id>', methods=['PUT'])
+def rebook_service_request(id):
     service_request = ServiceRequest.query.filter_by(id=id).first()
     if not service_request:
         return jsonify({'error': 'Service request not found'}), 404
-    service_request.service_status = 'requested'
-    service_request.date_of_request = datetime.now()
-    service_request.date_of_completion = None
-    service_request.professional_id = professional_id   
+    service_request.rebooked = True
     db.session.commit()
-    return jsonify({'message': 'Service request reopened'}), 200
+    return jsonify({'message': 'Service request rebooked'}), 200
+
+#Reopen service request
+# @app.route('/service_requests/rebook/<int:id>/<int:professional_id>', methods=['PUT'])
+# def reopen_service_request(id, professional_id):
+#     service_request = ServiceRequest.query.filter_by(id=id).first()
+#     if not service_request:
+#         return jsonify({'error': 'Service request not found'}), 404
+#     service_request.service_status = 'requested'
+#     service_request.date_of_request = datetime.now()
+#     service_request.date_of_completion = None
+#     service_request.professional_id = professional_id   
+#     db.session.commit()
+#     return jsonify({'message': 'Service request reopened'}), 200
 
 if __name__ == "__main__":
     app.run(debug=True)

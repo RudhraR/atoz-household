@@ -6,9 +6,8 @@
       </h5><br> </div>
       <div class="container">
         <div class="card">
-          <div class="card-header bg-secondary text-white"><h5>Your Service Requests</h5></div>
+          <h5 class="card-header bg-secondary text-white">Your Service Requests</h5>
           <div class="card-body">
-            <h5 style="text-align: left;">Open Service Requests: </h5>
             <ViewServiceRequests />
           </div>
         </div>

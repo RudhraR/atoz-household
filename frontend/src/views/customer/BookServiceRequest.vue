@@ -38,7 +38,7 @@
             <div class="form-group mb-3 row">
                 <label for="dateOfRequest" class="col-sm-6 col-form-label">Date of Request</label>
                 <div class="col-sm-6">
-                    <input type="text" id="dateOfRequest" class="form-control" v-model="dateOfRequest" disabled />
+                    <input type="datetime-local" id="dateOfRequest" class="form-control" v-model="dateOfRequest" />
                 </div>
             </div>
 
@@ -72,45 +72,50 @@ export default {
             type: Object,
             required: true,
         },
+        rebooked: {
+            type: Boolean,
+            default: false,
+        },
     },
     data() {
-    return {
-      serviceName: '', // Initialized empty
-      customerAddress: '', // Initialized empty
-      customerPincode: '', // Initialized empty
-      dateOfRequest: '', // Initialized empty
-      professionals: [], // List of available professionals
-      selectedProfessional: null, // Selected professional's user ID
-      contactNumber: "", // Customer's contact number
-      remarks: "", // Optional remarks
-    };
-  },
-  watch: {
-    serviceDetails: {
-      immediate: true,
-      handler(newValue) {
-        this.resetForm(); // Reset form when serviceDetails changes
-      },
+        return {
+            serviceName: '', // Initialized empty
+            customerAddress: '', // Initialized empty
+            customerPincode: '', // Initialized empty
+            dateOfRequest: '', // Initialized empty
+            professionals: [], // List of available professionals
+            selectedProfessional: null, // Selected professional's user ID
+            contactNumber: "", // Customer's contact number
+            remarks: "", // Optional remarks
+        };
     },
-    customerDetails: {
-      immediate: true,
-      handler(newValue) {
-        this.resetForm(); // Reset form when customerDetails changes
-      },
+    watch: {
+        serviceDetails: {
+            immediate: true,
+            handler(newValue) {
+                this.resetForm(); // Reset form when serviceDetails changes
+            },
+        },
+        customerDetails: {
+            immediate: true,
+            handler(newValue) {
+                this.resetForm(); // Reset form when customerDetails changes
+            },
+        },
+
     },
-  },
-  methods: {
-    resetForm() {
-      // Reset all form fields
-      this.serviceName = this.serviceDetails?.name || '';
-      this.customerAddress = this.customerDetails?.address || '';
-      this.customerPincode = this.customerDetails?.pincode || '';
-      this.dateOfRequest = new Date().toLocaleDateString(); // Reset to today
-      this.selectedProfessional = null; // Reset selection
-      this.contactNumber = this.customerDetails?.mobile || ""; // Clear contact number
-      this.remarks = ""; // Clear remarks
-      this.fetchProfessionals(); // Fetch professionals each time
-    },
+    methods: {
+        resetForm() {
+            // Reset all form fields
+            this.serviceName = this.serviceDetails?.name || '';
+            this.customerAddress = this.customerDetails?.address || '';
+            this.customerPincode = this.customerDetails?.pincode || '';
+            this.dateOfRequest = null; //new Date().toLocaleDateString(); // Reset to today
+            this.selectedProfessional = null; // Reset selection
+            this.contactNumber = this.customerDetails?.mobile || ""; // Clear contact number
+            this.remarks = ""; // Clear remarks
+            this.fetchProfessionals(); // Fetch professionals each time
+        },
         async fetchProfessionals() {
             try {
                 const categoryId = this.serviceDetails?.category_id; // Get the category ID from service details
@@ -132,12 +137,11 @@ export default {
                 customer_id: this.customerDetails.id, // Use the customer ID passed via props
                 professional_id: this.selectedProfessional,
                 date_of_request: this.dateOfRequest,
-                //   address: this.customerAddress,
-                //   pincode: this.customerPincode,
-                //   contact_number: this.contactNumber,
-                //   remarks: this.remarks,
+                status: "requested",
             };
             console.log('Request Data:', requestData); // Log the request data for debugging
+            console.log("from rebooked:", this.rebooked)
+            console.log("serviceid:", this.serviceDetails.serviceRequest_id)
             try {
                 const response = await fetch(`http://127.0.0.1:5000/service_requests`, {
                     method: "POST",
@@ -154,11 +158,29 @@ export default {
                     return; // Exit the method
                 }
                 alert("Service booked successfully!");
-                this.$emit('close'); 
+                if (this.rebooked && this.serviceDetails.hasOwnProperty('serviceRequest_id')) {
+                    console.log("from rebooked:", this.serviceDetails.serviceRequest_id)
+                    const response = await fetch(`http://127.0.0.1:5000/service_requests/rebook/${this.serviceDetails.serviceRequest_id}`, {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+                        },
+                        body: JSON.stringify({ status: "booked" }),
+                    });
+                    if (!response.ok) {
+                        const errorData = await response.json(); // Parse the error response
+                        alert(`Error updating existing service: ${errorData.error || 'Unknown error'}`); // Show specific error
+                        return; // Exit the method
+                    }
+                }
+                this.$emit('close');
             } catch (error) {
                 console.error("Error booking service: ${error.message}");
                 alert("An error occurred while booking the service.");
             }
+
+
         },
     },
     mounted() {

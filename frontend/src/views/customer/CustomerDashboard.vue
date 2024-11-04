@@ -46,8 +46,7 @@
                       <i class="text-muted">{{ service.time_required }} </i></p>
                   </div>
                   <div class="card-footer">
-                    <!-- Change: Updated click event to openBookingModal method -->
-                    <button class="btn btn-primary" @click="openBookingModal(service)">Book Service</button>
+                    <button class="btn btn-primary" @click="openBookingModal(service, false)">Book Service</button>
                   </div>
                 </div>
               </div>
@@ -60,7 +59,7 @@
       </div>
     </div>
 
-    <!-- Change: New modal for Booking Service Request -->
+    <!-- Modal for Booking Service Request -->
     <div class="modal fade" id="bookServiceModal" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -72,6 +71,7 @@
             <BookServiceRequest 
               :serviceDetails="currentService" 
               :customerDetails="user" 
+              :rebooked="rebooked"
               v-if="isModalVisible" 
               @close="closeBookingModal"  
             />
@@ -85,11 +85,13 @@
       <div class="card shadow">
         <h5 class="card-header bg-dark text-white" style="text-align: left;">Service History</h5>
         <div class="card-body">
-      <ViewServiceRequests />
-      </div>
+          <ViewServiceRequests 
+            :serviceRequest="service" 
+            @retry-booking="handleRetryBooking" 
+          />
+        </div>
       </div>
     </div>
-    
   </div>
 </template>
 
@@ -105,25 +107,46 @@ export default {
     BookServiceRequest,
     ViewServiceRequests
   },
+  
   data() {
     return {
       currentCategoryServices: [],
       categories: [],
-      currentCategory: [],
+      service: [], // This should probably be an object or a service request if you're displaying one
+      currentCategory: {}, // Initialized as an object
       currentService: null, // To store the currently selected service
       isModalVisible: false, // State to control modal visibility
+      rebooked: false,
     };
   },
+  
   computed: {
     // Computed property to filter categories with services
     categoriesWithServices() {
-      return this.categories.filter(category => category.services && category.services.length > 0);
-    }
+      return this.categories.filter(category => category.services && category.services.length > 0
+        && category.professionals && category.professionals.length > 0
+      );
+    },
   },
+  
   async mounted() {
     await this.fetchCategories();
+    this.service = await this.fetchServiceHistory();
   },
+  
   methods: {
+    async fetchServiceHistory() {
+      // Your logic to fetch service history
+      const response = await fetch('http://127.0.0.1:5000/service_requests', {
+        headers: {
+          method: 'GET',
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+        },
+      });
+      const data = await response.json();
+      return data.serviceRequests; // Assuming the API returns an array of service requests
+    },
+
     async fetchCategories() {
       const response = await fetch('http://127.0.0.1:5000/categories', {
         method: 'GET',
@@ -132,16 +155,16 @@ export default {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`
         }
       });
-      const data = await response.json()
+      const data = await response.json();
 
       if (!response.ok) {
-        alert(data.error)
+        alert(data.error);
       } else {
         this.categories = data.categories.map(category => ({
           ...category,
           imagePath: `http://127.0.0.1:5000/images/${category.categoryImage}`
         }));
-        console.log(this.categories)
+        console.log(this.categories);
       }
     },
 
@@ -157,13 +180,13 @@ export default {
         });
         const data = await response.json();
         this.currentCategoryServices = data.services;
-      }
-      catch (error) {
-        alert(error)
+      } catch (error) {
+        alert(error);
       }
     },
 
     openBookingModal(service) {
+      console.log("Inside openBooking:", service);
       this.currentService = service; // Set the selected service
       this.isModalVisible = true; // Open the booking modal
       $('#viewCategoryModal').modal('hide');
@@ -174,10 +197,31 @@ export default {
       this.isModalVisible = false; 
       $('#bookServiceModal').modal('hide'); 
       this.currentService = null;
-      this.$router.go(0);
+      this.rebooked = false;
+      this.$router.go(0); // Optionally refresh the page or remove this if not needed
+    },
+
+    handleRetryBooking(serviceRequest) {
+      // Ensure serviceRequest has all required details
+      this.currentService = {
+        id: serviceRequest.id,
+        name: serviceRequest.name,
+        price: serviceRequest.price,
+        time_required: serviceRequest.time_required,
+        category_id: serviceRequest.category_id || null, // Include category_id
+        serviceRequest_id: serviceRequest.serviceRequest_id || null, // Include serviceRequest_id
+      };
+      
+      // Open the bookServiceModal
+      this.isModalVisible = true;
+      this.rebooked = true;
+      console.log("Inside handleRetryBooking:", this.currentService);
+      $('#bookServiceModal').modal('show');
     },
   }
 };
 </script>
 
-<style scoped></style>
+<style scoped>
+/* Add any scoped styles here */
+</style>

@@ -15,12 +15,12 @@
              <li class="nav-item"  v-if="this.isLoggedin && this.role === 'admin'">
               <router-link class="nav-link" to="/manage_users">Manage users</router-link>
             </li>
-            <!-- <li class="nav-item"  v-if="this.isLoggedin && this.role === 'customer'">
-              <router-link class="nav-link" to="/view_service_requests">My Service Requests</router-link>
-            </li>  -->
+             
             </ul>
           <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-            
+            <li class="nav-item" v-if="this.isLoggedin && this.role != 'admin'">
+              <router-link class="nav-link" to="/profile">My profile</router-link>
+            </li>
             <li class="nav-item"  v-if="!this.isLoggedin">
               <router-link class="nav-link" to="/professional_registration">
                 <i>Register as Service professional</i></router-link>

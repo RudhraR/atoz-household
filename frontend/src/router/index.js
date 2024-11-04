@@ -11,7 +11,7 @@ import CustomerDashboard from '@/views/customer/CustomerDashboard.vue'
 import Manage_users from '@/views/admin/Manage_users.vue'
 import BookServiceRequest from '@/views/customer/BookServiceRequest.vue'
 import ViewServiceRequests from '@/components/ViewServiceRequests.vue'
-
+import ProfilePage from '@/views/ProfilePage.vue'
 const routes = [
 
   {
@@ -73,6 +73,11 @@ const routes = [
     path: '/view_service_requests',
     name: 'view_service_requests',
     component: ViewServiceRequests
+  },
+  {
+    path: '/profile',
+    name: 'profile',
+    component: ProfilePage
   }
 ]
 

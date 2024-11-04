@@ -92,15 +92,15 @@ class ServiceRequest(db.Model):
     service_status = db.Column(db.String(20), default="requested", nullable=False)  # 'requested', 'assigned', 'closed'
     
     remarks = db.Column(db.Text, nullable=True)
-
+    rebooked = db.Column(db.Boolean, default=False, nullable=True)
     # Relationships
     service = db.relationship('Service', back_populates='service_requests')
     customer = db.relationship('User', foreign_keys=[customer_id], back_populates='service_requests_as_customer')
     professional = db.relationship('User', foreign_keys=[professional_id], back_populates='service_requests_as_professional')
     
     def __init__(self, service_id, customer_id, professional_id=None, 
-                 date_of_request=datetime.utcnow(), date_of_completion=None, 
-                 service_status="requested", remarks=None):
+                 date_of_request=datetime.utcnow, date_of_completion=None, 
+                 service_status="requested", remarks=None, rebooked=False):
         self.service_id = service_id
         self.customer_id = customer_id
         self.professional_id = professional_id
@@ -108,3 +108,4 @@ class ServiceRequest(db.Model):
         self.date_of_completion = date_of_completion
         self.service_status = service_status
         self.remarks = remarks
+        self.rebooked = rebooked
