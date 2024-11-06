@@ -99,6 +99,7 @@ def login():
     
     user = User.query.filter_by(email=email).first()
     
+    
     if not user or not bcrypt.check_password_hash(user.password, password):
         return jsonify({"error": "Invalid credentials"}), 401
     
@@ -545,6 +546,19 @@ def update_service_request_customer(id, status):
         service_request.service_status = 'completed'
         service_request.date_of_completion = datetime.now()
         service_request.remarks = request.form.get('remarks')
+        rating = request.form.get('rating')
+        service_request.rating = rating
+
+        # Update professional rating
+        professional = User.query.filter_by(id=service_request.professional_id).first()
+        
+        current_rating = professional.rating
+        if current_rating is None:
+            professional.rating = rating
+        else:
+            new_rating = (float(current_rating)+float(rating)) / 2
+            professional.rating = new_rating
+            
     db.session.commit()
     return jsonify({'message': 'Service request '+status}), 200
 

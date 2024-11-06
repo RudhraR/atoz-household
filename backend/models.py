@@ -20,6 +20,7 @@ class User(db.Model):
     experience = db.Column(db.String(100), nullable=True)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     resume = db.Column(db.String(255), nullable=True)
+    rating = db.Column(db.Float, nullable=True)
     
     services_provided = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=True)
     category = db.relationship('Category', back_populates='professionals_specialization')
@@ -27,7 +28,7 @@ class User(db.Model):
     service_requests_as_professional = db.relationship('ServiceRequest', foreign_keys='ServiceRequest.professional_id', back_populates='professional')
     
     def __init__(self, username, email, role, password, address=None, pincode=None, mobile=None, 
-                 experience=None, services_provided=None, resume=None):
+                 experience=None, services_provided=None, resume=None, rating=None):
       self.username=username
       self.email=email  
       self.role=role
@@ -38,6 +39,7 @@ class User(db.Model):
       self.experience = experience
       self.services_provided = services_provided
       self.resume = resume
+      self.rating = rating
       
       if role == 'professional':
             self.is_active = False
@@ -92,7 +94,9 @@ class ServiceRequest(db.Model):
     service_status = db.Column(db.String(20), default="requested", nullable=False)  # 'requested', 'assigned', 'closed'
     
     remarks = db.Column(db.Text, nullable=True)
+    rating = db.Column(db.Float, nullable=True)
     rebooked = db.Column(db.Boolean, default=False, nullable=True)
+    
     # Relationships
     service = db.relationship('Service', back_populates='service_requests')
     customer = db.relationship('User', foreign_keys=[customer_id], back_populates='service_requests_as_customer')

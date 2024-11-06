@@ -1,7 +1,8 @@
 <template>
     <Navbar />
-    <div class="d-flex justify-content-center align-items-center">
+    <div class="d-flex justify-content-center align-items-center" style="margin-top: 20px">
     <div class="card shadow">
+      <h5 class="card-header text-white bg-secondary">Edit Profile Details </h5>
       <div class="card-body">
        
       <div class="form-group mb-3 row">

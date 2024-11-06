@@ -44,6 +44,7 @@ export default {
           },
         });
         const data = await response.json();
+        console.log(data.message)
         if (!response.ok) {
           console.log(data.error);
           return null;
@@ -67,7 +68,7 @@ export default {
           alert(data.error);
         }
         else{
-          alert(data.message);
+          // alert(data.message);
           localStorage.removeItem("access_token");
           this.isLoggedin = false;
           this.user = null;

@@ -33,9 +33,9 @@
               <button class="btn btn-danger btn-sm" @click="updateRequest(request.id, 'rejected')">Reject</button>
             </td>
             <td v-if="user.role == 'customer'">
-              
+
               <button v-if="request.status === 'accepted'" class="btn btn-success btn-sm"
-                @click="customerUpdateRequest(request.id, 'completed')">Complete</button>
+                @click="completeRequest(request)">Complete</button>
               <button v-if="request.status === 'requested' || request.status === 'accepted'"
                 class="btn btn-danger btn-sm" @click="customerUpdateRequest(request.id, 'cancelled')">Cancel</button>
               <p v-if="request.status === 'completed' || request.status === 'cancelled'">N/A</p>
@@ -51,8 +51,73 @@
     <p class="text-muted"><i>No service requests found.</i></p>
   </div>
 
+  <!-- Complete service request Modal -->
+  <div class="modal fade" id="serviceRemarksModal" tabindex="-1" aria-hidden="true" ref="serviceRemarksModal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Service Remarks</h5>
+          <button type="button" class="btn-close" @click="resetRemarksForm()" data-bs-dismiss="modal"
+            aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="form row mb-3">
+            <label class="col-sm-6 col-form-label">Request ID</label>
+            <div class="col-sm-6">
+              <input type="text" class="form-control" v-model="selectedRequest.id" disabled>
+            </div>
+          </div>
+
+          <div class="form row mb-3">
+            <label class="col-sm-6 col-form-label">Service Name</label>
+            <div class="col-sm-6">
+              <input type="text" class="form-control" v-model="selectedRequest.service_name" disabled>
+            </div>
+          </div>
+
+          <div class="form row mb-3">
+            <label class="col-sm-6 col-form-label">Assigned Professional</label>
+            <div class="col-sm-6">
+              <input type="text" class="form-control" v-model="selectedRequest.assigned_professional" disabled>
+            </div>
+          </div>
+
+          <div class="card shadow">
+            <div class="card-header">Give us your feedback:</div>
+            <div class="card-body">
+              <div class="form-group row">
+                <label class="col-form-label col-sm-6">Rate the service: &nbsp;</label>
+                <div class="col-sm-6" style="text-align: left;">
+                  <span v-for="(star, index) in 5" :key="index" @click="setRating(index + 1)"
+                    style="cursor: pointer; text-align: left;">
+                    <i :class="index < serviceRating ? 'fas fa-star text-danger' : 'far fa-star text-secondary'"></i>
+                  </span>
+                </div>
+              </div>
+
+              <div class="form-group row" style="text-align: center;">
+                <label class="col-sm-6 col-form-label">Remarks (if any):</label>
+                <span class="col-sm-6"><textarea class="form-control" v-model="remarks" rows="3"
+                    placeholder="Enter any additional remarks here"></textarea>
+                </span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" @click="resetRemarksForm()"
+            data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" @click="customerUpdateRequest(selectedRequest.id, 'completed')">Submit &
+            Close Request</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
   <!-- Display closed requests -->
-  <div class="container" style="margin-top: 20px;" v-if="closedRequests.length > 0 ">
+  <div class="container" style="margin-top: 20px;" v-if="closedRequests.length > 0">
     <table class="table caption-top border">
       <caption>
         <h5>Closed Requests: </h5>
@@ -80,11 +145,11 @@
             <td>{{ request.closed_on }}</td>
             <td>{{ request.status }}</td>
             <td v-if="user.role == 'customer'">
-              <button v-if="request.status === 'rejected' && request.rebooked == false"  class="btn btn-primary btn-sm"
+              <button v-if="request.status === 'rejected' && request.rebooked == false" class="btn btn-primary btn-sm"
                 @click="handleRetryClick(request)">Retry booking</button>
               <p v-else style="margin: 0%;">N/A</p>
             </td>
-            
+
           </tr>
 
         </template>
@@ -105,8 +170,9 @@ export default {
   data() {
     return {
       serviceRequests: [],
-      selectedRequestId: null,           // Stores the ID of the request to reopen
-      selectedProfessional: null,        // Stores the selected professional ID
+      selectedRequest: [],        // Stores the request details to complete and give remarks
+      serviceRating: 0,        // Stores the selected service rating
+      remarks: '',             // Stores the remarks
       professionals: [],                 // List of professionals for the category
       selectedCategoryId: null           // Stores the selected category ID
     };
@@ -135,28 +201,37 @@ export default {
       if (this.serviceRequests.length === 0) {
         return [];
       }
-      else{
-      if (this.user.role === "customer") {
-        return this.serviceRequests.filter(
-          request =>
-            request.customer_id === this.user.id &&
-            (request.status === 'cancelled' || request.status === 'completed' || request.status === 'rejected')
-        )
+      else {
+        if (this.user.role === "customer") {
+          return this.serviceRequests.filter(
+            request =>
+              request.customer_id === this.user.id &&
+              (request.status === 'cancelled' || request.status === 'completed' || request.status === 'rejected')
+          )
+        }
+        else if (this.user.role === "professional") {
+          return this.serviceRequests.filter(
+            request =>
+              request.assigned_professional === this.user.username &&
+              (request.status === 'closed' || request.status === 'rejected')
+          );
+        }
       }
-      else if (this.user.role === "professional") {
-        return this.serviceRequests.filter(
-        request =>
-          request.assigned_professional === this.user.username &&
-          (request.status === 'closed' || request.status === 'rejected')
-      );
-      }
-    }
     }
   },
   async mounted() {
     await this.fetchServiceRequests();
   },
   methods: {
+    setRating(rating) {
+      this.serviceRating = rating; // Update the service rating based on the selected star
+    },
+    resetRemarksForm() {
+      this.remarks = '';
+      this.serviceRating = 0;
+      this.selectedRequest = [];
+      $('#serviceRemarksModal').modal('hide');
+    },
     async fetchServiceRequests() {
       try {
         const response = await fetch('http://127.0.0.1:5000/service_requests',
@@ -172,7 +247,7 @@ export default {
         }
         const data = await response.json();
         this.serviceRequests = data.service_requests;
-        console.log("From viewservicerequests fetchservice requests", this.serviceRequests);
+        
       } catch (error) {
         console.error(error);
       }
@@ -200,17 +275,25 @@ export default {
     },
 
     async customerUpdateRequest(requestId, status) {
+      const formData = new FormData();
+      formData.append('status', status);
+      if(status === 'completed') {
+        formData.append('rating', this.serviceRating);
+        formData.append('remarks', this.remarks);
+      }
+      for (let [key, value] of formData.entries()) {
+    console.log(`${key}: ${value}`);
+}
       try {
         const response = await fetch(`http://127.0.0.1:5000/service_requests/customer/${requestId}/${status}`, {
           method: 'PUT',
           headers: {
-            'Content-Type': 'application/json',
             'Authorization': `Bearer ${localStorage.getItem('access_token')}`
           },
-          body: JSON.stringify({ status }),
+          body: formData
         });
         if (!response.ok) {
-          throw new Error('Failed to update request');
+          throw new Error('Failed to close request');
         }
         const data = await response.json();
         console.log(data);
@@ -218,8 +301,15 @@ export default {
       } catch (error) {
         console.error(error);
       }
+      if(status == "completed") {
+        this.resetRemarksForm();
+      }
     },
- 
+    async completeRequest(request) {
+      this.selectedRequest = request;
+      const serviceRemarksModal = new bootstrap.Modal(this.$refs.serviceRemarksModal);   // Initialize Bootstrap Modal
+      serviceRemarksModal.show();
+    },
     async fetchProfessionals(categoryId) {
       try {
         const response = await fetch(`http://127.0.0.1:5000/professionals_by_category/${categoryId}`,
@@ -234,7 +324,7 @@ export default {
         if (!response.ok) {
           throw new Error('Failed to fetch professionals');
         }
-        
+
         const data = await response.json();
         this.professionals = data.professionals;   // Assign professionals to dropdown
       } catch (error) {
@@ -243,13 +333,13 @@ export default {
     },
     async handleRetryClick(serviceRequest) {
       // Emit the event to the parent
-      console.log("from viewservice request handleretryclick:",serviceRequest)
+      
       const response = await fetch(`http://127.0.0.1:5000/service/${serviceRequest.service_id}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-        } 
+        }
       });
       const data = await response.json();
       data.service.serviceRequest_id = serviceRequest.id;
