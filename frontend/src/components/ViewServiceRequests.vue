@@ -36,9 +36,13 @@
 
               <button v-if="request.status === 'accepted'" class="btn btn-success btn-sm"
                 @click="completeRequest(request)">Complete</button>
-              <button v-if="request.status === 'requested' || request.status === 'accepted'"
-                class="btn btn-danger btn-sm" @click="customerUpdateRequest(request.id, 'cancelled')">Cancel</button>
-              <p v-if="request.status === 'completed' || request.status === 'cancelled'">N/A</p>
+              <span v-if="request.status === 'requested' || request.status === 'accepted'">
+              <button class="btn btn-warning btn-sm" 
+              @click="openRescheduleModal(request)">Reschedule</button>
+              <button class="btn btn-danger btn-sm" 
+              @click="customerUpdateRequest(request.id, 'cancelled')">Cancel</button>
+              </span>
+                <p v-if="request.status === 'completed' || request.status === 'cancelled'">N/A</p>
             </td>
           </tr>
 
@@ -51,13 +55,58 @@
     <p class="text-muted"><i>No service requests found.</i></p>
   </div>
 
+  
+  <!-- Reschedule service request Modal -->
+  <div class="modal fade" id="rescheduleServiceModal" tabindex="-1" aria-hidden="true" ref="rescheduleServiceModal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Reschedule Request</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"
+            aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="form row mb-3">
+            <label class="col-sm-6 col-form-label">Request ID</label>
+            <div class="col-sm-6">
+              <input type="text" class="form-control" v-model="selectedRequest.id" disabled>
+            </div>
+          </div>
+          <div class="form row mb-3">
+            <label class="col-sm-6 col-form-label">Service name</label>
+            <div class="col-sm-6">
+              <input type="text" class="form-control" v-model="selectedRequest.service_name" disabled>
+            </div>
+          </div>
+          <div class="form row mb-3">
+            <label class="col-sm-6 col-form-label">Booked on</label>
+            <div class="col-sm-6">
+              <input type="text" class="form-control" v-model="selectedRequest.booked_on" disabled>
+            </div>
+          </div>
+          <div class="form row mb-3">
+            <label class="col-sm-6 col-form-label">Reschedule to: </label>
+            <div class="col-sm-6">
+              <input type="datetime-local" class="form-control" v-model="rescheduledDate" >
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" @click="rescheduleRequest(selectedRequest.id, rescheduledDate)">
+            Reschedule Request</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Complete service request Modal -->
   <div class="modal fade" id="serviceRemarksModal" tabindex="-1" aria-hidden="true" ref="serviceRemarksModal">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">Service Remarks</h5>
-          <button type="button" class="btn-close" @click="resetRemarksForm()" data-bs-dismiss="modal"
+          <button type="button" class="btn-close" @click="resetForm()" data-bs-dismiss="modal"
             aria-label="Close"></button>
         </div>
         <div class="modal-body">
@@ -106,7 +155,7 @@
 
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" @click="resetRemarksForm()"
+          <button type="button" class="btn btn-secondary" @click="resetForm()"
             data-bs-dismiss="modal">Cancel</button>
           <button type="button" class="btn btn-primary" @click="customerUpdateRequest(selectedRequest.id, 'completed')">Submit &
             Close Request</button>
@@ -174,7 +223,8 @@ export default {
       serviceRating: 0,        // Stores the selected service rating
       remarks: '',             // Stores the remarks
       professionals: [],                 // List of professionals for the category
-      selectedCategoryId: null           // Stores the selected category ID
+      selectedCategoryId: null,         // Stores the selected category ID
+      rescheduledDate: ''
     };
   },
   computed: {
@@ -226,11 +276,40 @@ export default {
     setRating(rating) {
       this.serviceRating = rating; // Update the service rating based on the selected star
     },
-    resetRemarksForm() {
+    resetForm() {
       this.remarks = '';
       this.serviceRating = 0;
       this.selectedRequest = [];
-      $('#serviceRemarksModal').modal('hide');
+      this.rescheduledDate = '';
+    },
+    async openRescheduleModal(request) {
+      this.selectedRequest = request;
+      const rescheduledModal = new bootstrap.Modal(this.$refs.rescheduleServiceModal);   // Initialize Bootstrap Modal
+      rescheduledModal.show();
+    },
+    async rescheduleRequest(requestId, rescheduledDate) {
+     try{
+      const formData = new FormData();
+      formData.append('rescheduled_date', rescheduledDate);
+      const response = await fetch(`http://127.0.0.1:5000/service_requests/${requestId}/reschedule`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+        },
+        body: formData
+      });
+        if (!response.ok) {
+          throw new Error('Failed to reschedule request');
+        }
+        const data = await response.json();
+        alert(data.message);
+        // close the modal
+        const rescheduledModal = bootstrap.Modal.getInstance(this.$refs.rescheduleServiceModal);
+        rescheduledModal.hide();
+        this.fetchServiceRequests();
+      } catch (error) {
+          console.error(error);
+        } 
     },
     async fetchServiceRequests() {
       try {
@@ -302,7 +381,7 @@ export default {
         console.error(error);
       }
       if(status == "completed") {
-        this.resetRemarksForm();
+        this.resetForm();
       }
     },
     async completeRequest(request) {

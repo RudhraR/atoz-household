@@ -126,6 +126,7 @@ def protected():
 @jwt_required()
 def getuserdata():
     current_user= get_jwt_identity()
+
     user= User.query.filter_by(id=current_user['id']).first()
         
     if not user:
@@ -571,18 +572,17 @@ def rebook_service_request(id):
     db.session.commit()
     return jsonify({'message': 'Service request rebooked'}), 200
 
-#Reopen service request
-# @app.route('/service_requests/rebook/<int:id>/<int:professional_id>', methods=['PUT'])
-# def reopen_service_request(id, professional_id):
-#     service_request = ServiceRequest.query.filter_by(id=id).first()
-#     if not service_request:
-#         return jsonify({'error': 'Service request not found'}), 404
-#     service_request.service_status = 'requested'
-#     service_request.date_of_request = datetime.now()
-#     service_request.date_of_completion = None
-#     service_request.professional_id = professional_id   
-#     db.session.commit()
-#     return jsonify({'message': 'Service request reopened'}), 200
+#Reschedule service request
+@app.route('/service_requests/<int:id>/reschedule', methods=['PUT'])
+def reschedule_ServiceRequest(id):
+    service_request = ServiceRequest.query.filter_by(id=id).first()
+    if not service_request:
+        return jsonify({'error': 'Service request not found'}), 404
+    
+    service_request.date_of_request = datetime.fromisoformat(request.form.get('rescheduled_date'))
+ 
+    db.session.commit()
+    return jsonify({'message': 'Service request rescheduled'}), 200
 
 if __name__ == "__main__":
     app.run(debug=True)

@@ -1,6 +1,6 @@
 <template>
     <Navbar />
-    <div class="d-flex justify-content-center align-items-center" style="margin-top: 20px">
+    <div v-if="isLoggedin" class="d-flex justify-content-center align-items-center" style="margin-top: 20px">
     <div class="card shadow">
       <h5 class="card-header text-white bg-secondary">Edit Profile Details </h5>
       <div class="card-body">
@@ -37,7 +37,6 @@
         <input v-model="mobile" type="tel" min="10" max="10" class="form-control" />
       </div></div>
       <button class="btn btn-primary w-100" @click="update">Update</button>
-      
   </div>
     </div>
 </div>
@@ -45,8 +44,10 @@
 
 <script>
 import Navbar from '@/components/NavBar.vue'
+import userMixin from '@/mixins/userMixin';
 export default {
   name: "ProfilePage",
+  mixins: [userMixin],
   data() {
       return {
           email: "",
@@ -66,11 +67,11 @@ export default {
   },
   methods: {
       async getProfile() {
-          try {
+        if(this.isLoggedin){  
+        try {
             const response = await fetch('http://127.0.0.1:5000/getuserdata', {
                 method: 'GET',
                 headers: {
-                    
                     Authorization: "Bearer " + localStorage.getItem("access_token"),
                 },
             })
@@ -89,6 +90,9 @@ export default {
       }
     } catch (error) {
         console.log(error)
+    }}
+    else{
+        this.$router.push('/')
     }
     },
       async update() {

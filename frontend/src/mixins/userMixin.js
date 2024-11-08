@@ -9,15 +9,15 @@ export default {
     async created() {
       await this.checkAuth();
     },
-    watch: {
-      user(newVal) {
-        if (!newVal) {
-          // If user becomes null, meaning session expired or user is logged out
-          alert('Session expired. Please log in again.');
-          this.logout(); // Call the logout method to clear session
-        }
-      },
-    },
+    // watch: {
+      // user(newVal) {
+      //   if (!newVal) {
+      //     // If user becomes null, meaning session expired or user is logged out
+      //     alert('Session expired. Please log in again.');
+      //     this.logout(); // Call the logout method to clear session
+      //   }
+      // },
+    // },
     methods: {
       async checkAuth(){
           const access_token = localStorage.getItem("access_token");
@@ -28,32 +28,39 @@ export default {
             return;
           }
             try {
-              this.user = await this.getUserDetails();
-              console.log(this.user)
-   
+              this.user = await this.getUserDetails(); 
             } catch (error) {
               console.log(error);
             }       
       },
       async getUserDetails() {
+        if(!localStorage.getItem("access_token")) {
+          alert("Please log in to continue.");
+          window.location.href = "/";
+          return null;
+        }
+        try{
         const response = await fetch("http://127.0.0.1:5000/getuserdata", {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
             Authorization: "Bearer " + localStorage.getItem("access_token"),
           },
-        });
-        const data = await response.json();
-        console.log(data.message)
-        if (!response.ok) {
-          console.log(data.error);
-          return null;
-        } else {
-          console.log(data.message);
-          this.isLoggedin = true;
-          this.role = data.user.role;
-          return data.user;
-        }
+        });   
+          const data = await response.json();
+          // console.log(data.message)
+          if (!response.ok) {
+            console.log(data.error);
+            return null;
+          } else {
+            console.log(data.message);
+            this.isLoggedin = true;
+            this.role = data.user.role;
+            return data.user;
+          }
+      } catch (error) {
+        console.log(error);
+      }
       },
       async logout() {
         const response = await fetch("http://127.0.0.1:5000/logout", {
