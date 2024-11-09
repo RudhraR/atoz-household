@@ -12,8 +12,11 @@
             <li class="nav-item mx-5">
               <router-link class="nav-link" to="/">Home</router-link>
             </li>
-             <li class="nav-item"  v-if="this.isLoggedin && this.role === 'admin'">
+             <li class="nav-item mx-5"  v-if="this.isLoggedin && this.role === 'admin'">
               <router-link class="nav-link" to="/manage_users">Manage users</router-link>
+            </li>
+            <li class="nav-item mx-5"  v-if="this.isLoggedin">
+              <router-link class="nav-link" to="/search">Search</router-link>
             </li>
              
             </ul>

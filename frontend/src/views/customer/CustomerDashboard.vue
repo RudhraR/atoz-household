@@ -97,7 +97,7 @@
 
 <script>
 import userMixin from '@/mixins/userMixin';
-import BookServiceRequest from './BookServiceRequest.vue';
+import BookServiceRequest from '@/components/BookServiceRequest.vue';
 import ViewServiceRequests from '@/components/ViewServiceRequests.vue';
 
 export default {

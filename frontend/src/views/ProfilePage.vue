@@ -34,7 +34,7 @@
       <div class="form-group mb-3 row">
         <label for="mobile" class="col-sm-4 col-form-label">Mobile</label>
         <div class="col-sm-8">
-        <input v-model="mobile" type="tel" min="10" max="10" class="form-control" />
+        <input v-model="mobile" type="tel" maxlength="10" class="form-control" />
       </div></div>
       <button class="btn btn-primary w-100" @click="update">Update</button>
   </div>
@@ -67,7 +67,6 @@ export default {
   },
   methods: {
       async getProfile() {
-        if(this.isLoggedin){  
         try {
             const response = await fetch('http://127.0.0.1:5000/getuserdata', {
                 method: 'GET',
@@ -90,9 +89,6 @@ export default {
       }
     } catch (error) {
         console.log(error)
-    }}
-    else{
-        this.$router.push('/')
     }
     },
       async update() {

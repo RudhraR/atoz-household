@@ -9,9 +9,11 @@ import Services from '@/views/admin/Services.vue'
 import AdminDashboard from '@/views/admin/AdminDashboard.vue'
 import CustomerDashboard from '@/views/customer/CustomerDashboard.vue'
 import Manage_users from '@/views/admin/Manage_users.vue'
-import BookServiceRequest from '@/views/customer/BookServiceRequest.vue'
+import BookServiceRequest from '@/components/BookServiceRequest.vue'
 import ViewServiceRequests from '@/components/ViewServiceRequests.vue'
 import ProfilePage from '@/views/ProfilePage.vue'
+import SearchPage from '@/views/SearchPage.vue'
+
 const routes = [
 
   {
@@ -78,6 +80,11 @@ const routes = [
     path: '/profile',
     name: 'profile',
     component: ProfilePage
+  },
+  {
+    path: '/search',
+    name: 'search',
+    component: SearchPage
   }
 ]
 
