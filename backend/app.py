@@ -587,9 +587,9 @@ def reschedule_ServiceRequest(id):
 def search_customers():
     query = request.form.get('query')
     search_type = request.form.get('type')
-
+    text_query = "%" + query + "%"
     if search_type == 'service_name':
-        results = Service.query.filter(Service.name.ilike(f"%{query}%")).all()
+        results = Service.query.filter(Service.name.like(text_query)).all()
         return jsonify([result.name for result in results])
     
     elif search_type == 'location':
@@ -606,38 +606,65 @@ def search_customers():
 def search_professionals():
     query = request.form.get('query')
     search_type = request.form.get('type')
-
+    user_id = request.form.get('user_id')
+    text_query = f"%{query}%"
+    result = []
+    
     if search_type == 'date_booked':
-        results = ServiceRequest.query.filter(ServiceRequest.date_of_request.ilike(f"%{query}%")).all()
-        return jsonify([f"Request ID: {result.id}, Date: {result.date_of_request}" for result in results])
+        result = ServiceRequest.query.filter(ServiceRequest.professional_id == user_id, 
+                                    ServiceRequest.date_of_request.like(text_query)).all()
     
     elif search_type == 'date_closed':
-        results = ServiceRequest.query.filter(ServiceRequest.date_of_completion.ilike(f"%{query}%")).all()
-        return jsonify([f"Request ID: {result.id}, Closed Date: {result.date_of_completion}" for result in results])
+        result = ServiceRequest.query.filter(ServiceRequest.professional_id == user_id, 
+                                     ServiceRequest.date_of_completion.like(text_query)).all()
+    
+    elif search_type == 'status':
+        result = ServiceRequest.query.filter(ServiceRequest.professional_id == user_id, 
+                                     ServiceRequest.service_status.like(text_query)).all()
     
     elif search_type == 'location':
-        results = User.query.filter(User.address.ilike(f"%{query}%")).filter(User.role == 'professional').all()
-        return jsonify([result.username for result in results])
-    
+        result = ServiceRequest.query.join(User, ServiceRequest.customer_id == User.id).filter(
+            ServiceRequest.professional_id == user_id,
+            User.address.like(text_query)).all()
+        
     elif search_type == 'pincode':
-        results = User.query.filter(User.pincode.ilike(f"%{query}%")).filter(User.role == 'professional').all()
-        return jsonify([result.username for result in results])
-    
+        result = ServiceRequest.query.join(User, ServiceRequest.customer_id == User.id).filter(
+            ServiceRequest.professional_id == user_id,
+            User.pincode.like(text_query)).all()
+        
+    results = []
+    if result:
+        for result in result:
+            results.append({
+            'id': result.id, 
+            'customer_name': result.customer.username,
+            'assigned_professional': result.professional.username,
+            'service_name': result.service.name,
+            'category': result.service.category.name,
+            'date_booked': result.date_of_request,
+            'date_closed': result.date_of_completion if result.date_of_completion else 'N/A',
+            'status': result.service_status,
+            'address': result.customer.address,
+            'pincode': result.customer.pincode
+            })
+        return jsonify({'results': results}), 200
     return jsonify({'message': 'Invalid search'}), 400
 
 @app.route('/search/admin', methods=['POST'])
 def search_admin():
     query = request.form.get('query')
+    textquery = "%" +query + "%"
     search_type = request.form.get('type')
+    
     result = []
     if search_type == 'id':
         result = User.query.filter(User.id == query).all()
         
     elif search_type == 'email':
-        result = User.query.filter(User.email.ilike(f"%{query}%")).all()
+        result = User.query.filter(User.email.like(textquery)).all()
     
     elif search_type == 'name':
-        results = User.query.filter(User.username.ilike(f"%{query}%")).all()
+        result = User.query.filter(User.username.like(textquery)).all()
     
     if result:
         results = []
@@ -651,14 +678,17 @@ def search_admin():
         return jsonify({'results': results}), 200
     
     if search_type == 'status':
-        result = ServiceRequest.query.filter(ServiceRequest.service_status.ilike(f"%{query}%")).all()
+        result = ServiceRequest.query.filter(ServiceRequest.service_status.like(textquery)).all()
         if result:
             results = []
             for result in result:
                 results.append({
                 'id': result.id, 
+                'service_name': result.service.name,
+                'category': result.service.category.name,
                 'status': result.service_status,
-                'date_of_request': result.date_of_request,
+                'date_booked': result.date_of_request,
+                'date_closed': (result.date_of_completion if result.date_of_completion else 'N/A'),
                 'assigned_professional': result.professional.username,
                 'customer_name': result.customer.username
             })

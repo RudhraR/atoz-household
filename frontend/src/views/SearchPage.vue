@@ -3,7 +3,8 @@
     <div v-if="this.role" class="container mt-5">
       <!-- Search Input Section -->
       <div class="search-box d-flex align-items-center mb-3">
-        <label class="me-2 flex-shrink-0">Search by:</label>
+        <label v-if = "this.role === 'customer' || this.role === 'admin'" class="me-2 flex-shrink-0">Search by:</label>
+        <label v-else = "this.role === 'professional'" class="me-2 flex-shrink-0">Search Service Request by:</label>
         <select v-model="searchType" class="form-select me-2">
           <option v-for="option in searchOptions" :key="option.value" :value="option.value">
             {{ option.text }}
@@ -19,7 +20,7 @@
       </div>
   
       <!-- Results Table -->
-      <table class="table table-striped" v-if="results.length > 0">
+      <table class="table table-striped" v-if="results && results.length > 0">
         <thead>
           <tr>
             <!-- Conditional headers based on role -->
@@ -27,13 +28,34 @@
             <th v-if="this.role === 'customer'">Category</th>
             <th v-if="this.role === 'customer'">Book Service</th>
   
-            <th v-if="this.role === 'professional'">Service Request</th>
-            <th v-if="this.role === 'professional'">Date Booked</th>
-            <th v-if="this.role === 'professional'">Date Closed</th>
-  
-            <th v-if="this.role === 'admin'">Name</th>
-            <th v-if="this.role === 'admin'">Email</th>
-            <th v-if="this.role === 'admin'">Actions</th>
+            <template v-if="this.role === 'professional'">
+              <th>Req. #</th>
+              <th>Service Name</th>
+              <th>Category</th>
+              <th>Customer Name</th>
+              <th>Address</th>
+              <th>Pincode</th>
+              <th>Date Booked</th>
+              <th>Date Closed</th>
+              <th>Status</th>
+            </template>
+            <template v-if ="this.role === 'admin'">
+              <template v-if="searchType != 'status'">
+                <th>Name</th>
+                <th>Email</th>
+                <th>Actions</th>
+              </template>
+              <template v-else>
+                <th>ID</th>
+                <th>Service Name</th>
+                <th>Category</th>
+                <th>Customer Name</th>
+                <th>Assigned Professional</th>
+                <th>Booked on</th>
+                <th>Completed on</th>
+                <th>Status</th>
+              </template>
+            </template>
           </tr>
         </thead>
         <tbody>
@@ -46,20 +68,44 @@
             </td>
   
             <!-- Professional Role: Show Service Requests -->
-            <td v-if="this.role === 'professional'">{{ item.service_request }}</td>
-            <td v-if="this.role === 'professional'">{{ item.date_booked }}</td>
-            <td v-if="this.role === 'professional'">{{ item.date_closed }}</td>
-  
-            <!-- Admin Role: Show Details with Delete Function -->
-            <td v-if="this.role === 'admin'">{{ item.name }}</td>
-            <td v-if="this.role === 'admin'">{{ item.email }}</td>
-            <td v-if="this.role === 'admin'">
-              <button @click="deleteUser(item.id, item.role)" class="btn btn-danger">Delete</button>
-            </td>
+            <template v-if="this.role === 'professional'">
+              <td>{{ item.id }}</td>
+              <td>{{ item.service_name }}</td>
+              <td>{{ item.category }}</td>
+              <td>{{ item.customer_name }}</td>
+              <td>{{ item.address }}</td>
+              <td>{{ item.pincode }}</td>
+              <td>{{ item.date_booked }}</td>
+              <td>{{ item.date_closed }}</td>
+              <td>{{ item.status }}</td>
+            </template>
+             
+            <!-- Admin Role: Show Details -->
+            <template v-if="this.role === 'admin'">
+              <template v-if="searchType != 'status'">
+                <!-- Show customer/professional Details with Delete Function -->
+                <td>{{ item.name }}</td>
+                <td>{{ item.email }}</td>
+                <td>
+                  <button @click="deleteUser(item.id, item.role)" class="btn btn-danger">Delete</button>
+                </td>
+              </template>
+              <template v-else>
+                <td>{{ item.id }}</td>
+                <td>{{ item.service_name }}</td>
+                <td>{{ item.category }}</td>
+                <td>{{ item.customer_name }}</td>
+                <td>{{ item.assigned_professional }}</td>
+                <td>{{ item.date_booked }}</td>
+                <td>{{ item.date_closed }}</td>
+                <td>{{ item.status }}</td>
+              </template>
+            </template>
           </tr>
         </tbody>
       </table>
   
+      
       <p v-if ="invalidSearch" class="text-muted"><i>Enter a valid search query.</i></p>
       <!-- Book Service Modal -->
       <BookServiceRequest v-if="isModalOpen" :service="selectedService" @close="isModalOpen = false" />
@@ -99,17 +145,18 @@
             ];
           } else if (this.role === 'professional') {
             return [
-              { value: 'date_booked', text: 'Date Booked' },
-              { value: 'date_closed', text: 'Date Closed' },
+              { value: 'date_booked', text: 'Date Booked(yyyy-mm-dd)' },
+              { value: 'date_closed', text: 'Date Closed(yyyy-mm-dd)' },
               { value: 'location', text: 'Location' },
               { value: 'pincode', text: 'Pincode' },
+              { value: 'status', text: 'Status(requested/accepted/completed/cancelled/rejected)' }
             ];
           } else if (this.role === 'admin') {
             return [
               { value: 'id', text: 'User ID' },
               { value: 'email', text: 'User Email' },
               { value: 'name', text: 'User Name' },
-              { value: 'status', text: 'Service Request Status' },
+              { value: 'status', text: 'Service Request Status(requested/accepted/completed/cancelled/rejected)' },
             ];
           }
         }
@@ -149,11 +196,11 @@
 
   async fetchProfessionalResults(formData) {
     try {
-      
+      formData.append('user_id', this.user.id)
       const response = await fetch('http://127.0.0.1:5000/search/professionals', {
         method: 'POST',  
         headers: {
-            Authorization: "Bearer " + localStorage.getItem("access_token")
+            Authorization: `Bearer + localStorage.getItem("access_token")`
         },
         body: formData,  // Send the FormData object
       });
