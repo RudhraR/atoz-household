@@ -486,7 +486,8 @@ def get_professionals_by_category(category_id):
             'email': professional.email,
             'services_provided': professional.category.name,
             'experience': professional.experience,
-            'pincode': professional.pincode
+            'pincode': professional.pincode,
+            'rating': professional.rating
         })
     return jsonify({'professionals': professional_data}), 200
 
@@ -528,6 +529,9 @@ def update_service_request(id, status):
         service_request.service_status = 'accepted'
     elif status == 'rejected':
         service_request.service_status = 'rejected'
+        service_request.date_of_completion = datetime.now()
+    elif status == 'completed':
+        service_request.service_status = 'completed'
         service_request.date_of_completion = datetime.now()
     db.session.commit()
     return jsonify({'message': 'Service request'+status}), 200

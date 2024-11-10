@@ -48,7 +48,8 @@
                 <div class="col-sm-6">
                     <select id="professional" class="form-control" v-model="selectedProfessional">
                         <option v-for="user in professionals" :key="user.id" :value="user.id">
-                            {{ user.username }} <!-- Updated to show username -->
+                            {{ user.username }} &nbsp;&nbsp;
+                            {{ user.rating ? `(Rating: ${user.rating}/5)` : '(No ratings yet)' }}
                         </option>
                     </select>
                 </div>

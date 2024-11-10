@@ -31,6 +31,8 @@
               <button v-if="request.status === 'requested'" class="btn btn-primary btn-sm"
                 @click="updateRequest(request.id, 'accepted')">Accept</button>
               <button class="btn btn-danger btn-sm" @click="updateRequest(request.id, 'rejected')">Reject</button>
+              <button v-if="request.status === 'accepted'" class="btn btn-success btn-sm"
+                @click="updateRequest(request.id, 'completed')">Complete</button>
             </td>
             <td v-if="user.role == 'customer'">
 
@@ -263,7 +265,7 @@ export default {
           return this.serviceRequests.filter(
             request =>
               request.assigned_professional === this.user.username &&
-              (request.status === 'closed' || request.status === 'rejected')
+              (request.status === 'closed' || request.status === 'rejected' || request.status === 'completed')
           );
         }
       }
