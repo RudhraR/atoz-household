@@ -24,10 +24,15 @@
         <thead>
           <tr>
             <!-- Conditional headers based on role -->
-            <th v-if="this.role === 'customer'">Service Name</th>
-            <th v-if="this.role === 'customer'">Category</th>
-            <th v-if="this.role === 'customer'">Book Service</th>
-  
+
+            <template v-if="this.role === 'customer'">
+              <th>Service Name</th>
+              <th>Category</th>
+              <th>Price</th>
+              <th>Time Required</th>
+              <th>Actions</th>
+            </template>
+
             <template v-if="this.role === 'professional'">
               <th>Req. #</th>
               <th>Service Name</th>
@@ -60,13 +65,18 @@
         </thead>
         <tbody>
           <tr v-for="item in results" :key="item.id">
+      
             <!-- Customer Role: Book Service Button to Open Modal -->
-            <td v-if="this.role === 'customer'">{{ item.service_name }}</td>
-            <td v-if="this.role === 'customer'">{{ item.category }}</td>
-            <td v-if="this.role === 'customer'">
-              <button @click="openBookingModal(item)" class="btn btn-primary">Book Service</button>
-            </td>
-  
+            <template v-if="this.role === 'customer'">
+              <td>{{ item.name }}</td>
+              <td>{{ item.category }}</td>
+              <td>{{ item.price }}</td>
+              <td>{{ item.time_required }}</td>
+              <td>
+                <button @click="openBookingModal(item)" class="btn btn-primary">Book Service</button>
+              </td>
+            </template>
+
             <!-- Professional Role: Show Service Requests -->
             <template v-if="this.role === 'professional'">
               <td>{{ item.id }}</td>
@@ -104,11 +114,31 @@
           </tr>
         </tbody>
       </table>
-  
-      
+    
       <p v-if ="invalidSearch" class="text-muted"><i>Enter a valid search query.</i></p>
-      <!-- Book Service Modal -->
-      <BookServiceRequest v-if="isModalOpen" :service="selectedService" @close="isModalOpen = false" />
+    
+      <!-- Modal for Booking Service Request -->
+    <div class="modal fade" id="bookServiceModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Book a Service</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <BookServiceRequest 
+              :serviceDetails="selectedService" 
+              :customerDetails="user" 
+              :rebooked=false
+              v-if="isModalVisible" 
+              @close="closeBookingModal"  
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+
+
     </div>
   </template>
   
@@ -128,7 +158,7 @@
         searchType: '',
         searchQuery: '',
         results: [],
-        isModalOpen: false,
+        isModalVisible: false,
         selectedService: null,
         searchOptions: [], // Options dynamically change based on role
         invalidSearch: false
@@ -162,6 +192,7 @@
         }
     },
     methods: { 
+
   async performSearch() {
     this.invalidSearch = false;
     const formData = new FormData();
@@ -183,7 +214,7 @@
       const response = await fetch('http://127.0.0.1:5000/search/customers', {
         method: 'POST',  
         headers: {
-            Authorization: "Bearer " + localStorage.getItem("access_token")
+            'Authorization': `Bearer ${localStorage.getItem('access_token')}`
         },
         body: formData,  // Send the FormData object
       });
@@ -200,7 +231,7 @@
       const response = await fetch('http://127.0.0.1:5000/search/professionals', {
         method: 'POST',  
         headers: {
-            Authorization: `Bearer + localStorage.getItem("access_token")`
+            'Authorization': `Bearer ${localStorage.getItem('access_token')}`
         },
         body: formData,  // Send the FormData object
       });
@@ -217,7 +248,7 @@
       const response = await fetch('http://127.0.0.1:5000/search/admin', {
         method: 'POST',  
         headers: {
-            Authorization: `Bearer  + localStorage.getItem("access_token")`
+            'Authorization': `Bearer ${localStorage.getItem('access_token')}`
         },
         body: formData,  // Send the FormData object
       });
@@ -238,9 +269,14 @@
 
       openBookingModal(service) {
         this.selectedService = service;
-        this.isModalOpen = true;
+        this.isModalVisible = true;
+        $('#bookServiceModal').modal('show'); 
       },
-  
+      closeBookingModal() {
+      this.isModalVisible = false; 
+      $('#bookServiceModal').modal('hide'); 
+      this.selectedService = null;
+    },
       async deleteUser(id, role) {
         try {
                 url = (role==='customer')?`http://127.0.0.1:5000/customers/${id}`:`http://127.0.0.1:5000/professionals/${id}`

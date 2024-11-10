@@ -587,18 +587,34 @@ def reschedule_ServiceRequest(id):
 def search_customers():
     query = request.form.get('query')
     search_type = request.form.get('type')
-    text_query = "%" + query + "%"
+    text_query = f"%{query}%"
+    result = []
     if search_type == 'service_name':
-        results = Service.query.filter(Service.name.like(text_query)).all()
-        return jsonify([result.name for result in results])
+        result = (Service.query.join(Category).join(User, User.services_provided == Category.id)
+        .filter(Service.name.like(text_query)).all())
     
     elif search_type == 'location':
-        results = User.query.filter(User.address.ilike(f"%{query}%")).all()
-        return jsonify([result.username for result in results])
+        result = ( Service.query.join(Category)
+            .join(User, User.services_provided == Category.id)
+            .filter(User.address.like(text_query), User.role == 'professional').all())
     
     elif search_type == 'pincode':
-        results = User.query.filter(User.pincode.ilike(f"%{query}%")).all()
-        return jsonify([result.username for result in results])
+        result = ( Service.query.join(Category)
+            .join(User, User.services_provided == Category.id)
+            .filter(User.pincode.like(text_query), User.role == 'professional').all())
+        
+    if result:
+        results = []
+        for result in result:
+            results.append({
+            'name': result.name,
+            'id': result.id,
+            'price': result.price,
+            'time_required': result.time_required,
+            'category': result.category.name,
+            'category_id': result.category_id
+            })
+        return jsonify({'results': results}), 200
     
     return jsonify({'message': 'Invalid search'}), 400
 
@@ -653,7 +669,7 @@ def search_professionals():
 @app.route('/search/admin', methods=['POST'])
 def search_admin():
     query = request.form.get('query')
-    textquery = "%" +query + "%"
+    textquery = f"%{query}%"
     search_type = request.form.get('type')
     
     result = []

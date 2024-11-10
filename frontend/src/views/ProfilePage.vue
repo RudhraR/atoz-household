@@ -71,7 +71,7 @@ export default {
             const response = await fetch('http://127.0.0.1:5000/getuserdata', {
                 method: 'GET',
                 headers: {
-                    Authorization: "Bearer " + localStorage.getItem("access_token"),
+                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`
                 },
             })
             const data = await response.json()
@@ -105,7 +105,7 @@ export default {
             const response = await fetch('http://127.0.0.1:5000/updateProfile', {
                 method: 'POST',
                 headers: {
-                    Authorization: "Bearer " + localStorage.getItem("access_token")
+                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`
                 },
                 body: formData
       })

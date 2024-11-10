@@ -186,7 +186,6 @@ export default {
     },
 
     openBookingModal(service) {
-      console.log("Inside openBooking:", service);
       this.currentService = service; // Set the selected service
       this.isModalVisible = true; // Open the booking modal
       $('#viewCategoryModal').modal('hide');
@@ -198,7 +197,7 @@ export default {
       $('#bookServiceModal').modal('hide'); 
       this.currentService = null;
       this.rebooked = false;
-      this.$router.go(0); // Optionally refresh the page or remove this if not needed
+      this.$router.go(0); // To refresh the page
     },
 
     handleRetryBooking(serviceRequest) {
