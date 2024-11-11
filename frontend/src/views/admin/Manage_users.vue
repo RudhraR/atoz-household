@@ -16,7 +16,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr v-for="(customer, index) in all_customers" v-if="all_customers.length > 0"
+                                <tr v-for="(customer, index) in all_customers" v-if="all_customers && all_customers.length > 0"
                                     :key="customer.id">
                                     <th scope="row">{{ index + 1 }}</th>
                                     <td><a @click="openModal('customer', customer)" style="cursor: pointer;"
@@ -54,7 +54,7 @@
                             </thead>
                             <tbody>
                                 <tr v-for="(professional, index) in available_professionals"
-                                    v-if="available_professionals.length > 0" :key="professional.id">
+                                    v-if="available_professionals && available_professionals.length > 0" :key="professional.id">
                                     <th scope="row">{{ index + 1 }}</th>
                                     <td><a @click="openModal('professional', professional)" style="cursor: pointer;"
                                             class="text-secondary">
@@ -92,7 +92,7 @@
                             </thead>
                             <tbody>
                                 <tr v-for="(professional, index) in new_professionals"
-                                    v-if="new_professionals.length > 0" :key="professional.id">
+                                    v-if="new_professionals && new_professionals.length > 0" :key="professional.id">
                                     <th scope="row">{{ index + 1 }}</th>
                                     <td>
                                         <a @click="openModal('professional', professional)" style="cursor: pointer;"

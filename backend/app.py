@@ -1,4 +1,5 @@
 from flask import Flask, jsonify, request, send_file, send_from_directory
+from sqlalchemy import func
 from config import Config
 from models import *
 from flask_cors import CORS
@@ -715,6 +716,85 @@ def search_admin():
             return jsonify({'results': results}), 200
         
     return jsonify({'message': 'Invalid search'}), 400
+
+#Chart summary 
+
+
+@app.route('/request_summary', methods=['GET'])
+@jwt_required()
+def request_summary():
+    current_user = get_jwt_identity()
+    user = User.query.filter_by(id=current_user['id']).first()
+    try:
+        if user.role == 'admin':
+            summary = (db.session.query(ServiceRequest.service_status, func.count(ServiceRequest.id))
+            .group_by(ServiceRequest.service_status).all())
+            data = {status: count for status, count in summary}
+            return jsonify(data), 200
+
+        elif user.role == 'professional':
+            summary = (db.session.query(ServiceRequest.service_status, func.count(ServiceRequest.id))
+            .filter(ServiceRequest.professional_id == user.id).filter(ServiceRequest.service_status != 'cancelled')
+            .group_by(ServiceRequest.service_status).all())
+            data = {status: count for status, count in summary}
+            return jsonify(data), 200
+        
+        elif user.role == 'customer':
+            summary = (db.session.query(ServiceRequest.service_status, func.count(ServiceRequest.id))
+            .filter(ServiceRequest.customer_id == user.id)
+            .group_by(ServiceRequest.service_status).all())
+            data = {status: count for status, count in summary}
+            return jsonify(data), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/ratings_summary', methods=['GET'])
+@jwt_required()
+def ratings_summary():
+    current_user = get_jwt_identity()
+    user = User.query.filter_by(id=current_user['id']).first()
+    if not current_user:
+        return jsonify({"error": "User not found"}), 404
+
+    rated_requests = []   
+    # Admin: all ratings
+    if user.role == 'admin':
+        rated_requests = db.session.query( ServiceRequest.rating,func.count(ServiceRequest.rating)
+        ).filter(ServiceRequest.rating.isnot(None)).group_by(ServiceRequest.rating).all()
+        
+        not_rated_count = db.session.query(func.count(ServiceRequest.id)
+        ).filter(ServiceRequest.service_status == 'completed').filter(ServiceRequest.rating.is_(None)).scalar()
+
+    # Professional: ratings for requests assigned to them
+    elif user.role == 'professional':
+        rated_requests = db.session.query(ServiceRequest.rating,func.count(ServiceRequest.rating)
+        ).filter(ServiceRequest.rating.isnot(None),ServiceRequest.professional_id == user.id
+        ).group_by(ServiceRequest.rating).all()
+        
+        not_rated_count = db.session.query(func.count(ServiceRequest.id)
+            ).filter(ServiceRequest.service_status == 'completed').filter(
+            ServiceRequest.rating.is_(None), ServiceRequest.professional_id == user.id).scalar()
+
+    # Customer: ratings they provided
+    elif user.role == 'customer':
+        rated_requests = db.session.query(ServiceRequest.rating,func.count(ServiceRequest.rating)
+        ).filter(ServiceRequest.rating.isnot(None), ServiceRequest.customer_id == user.id
+        ).group_by(ServiceRequest.rating).all()
+        
+        not_rated_count = db.session.query(func.count(ServiceRequest.id)
+            ).filter(ServiceRequest.service_status == 'completed').filter(
+            ServiceRequest.rating.is_(None), ServiceRequest.customer_id == user.id).scalar()
+
+    # Format ratings data into a dictionary with keys for ratings 1-5 and "Not Rated Yet"
+    ratings_summary = {str(i): 0 for i in range(1, 6)}
+    ratings_summary["Not Rated Yet"] = not_rated_count
+
+    # Populate ratings summary with actual counts
+    for rating, count in rated_requests:
+        ratings_summary[str(int(rating))] = count
+    print("RAtings summary",ratings_summary)
+    return jsonify(ratings_summary), 200
 
 if __name__ == "__main__":
     app.run(debug=True)

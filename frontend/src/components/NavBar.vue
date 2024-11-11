@@ -18,7 +18,9 @@
             <li class="nav-item mx-5"  v-if="this.isLoggedin">
               <router-link class="nav-link" to="/search">Search</router-link>
             </li>
-             
+            <li class="nav-item mx-5"  v-if="this.isLoggedin">
+              <router-link class="nav-link" to="/summary">Summary</router-link>
+            </li> 
             </ul>
           <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
             <li class="nav-item" v-if="this.isLoggedin && this.role != 'admin'">

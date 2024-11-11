@@ -13,6 +13,7 @@ import BookServiceRequest from '@/components/BookServiceRequest.vue'
 import ViewServiceRequests from '@/components/ViewServiceRequests.vue'
 import ProfilePage from '@/views/ProfilePage.vue'
 import SearchPage from '@/views/SearchPage.vue'
+import SummaryGraphs from '@/views/SummaryGraphs.vue'
 
 const routes = [
 
@@ -85,6 +86,11 @@ const routes = [
     path: '/search',
     name: 'search',
     component: SearchPage
+  },
+  {
+    path: '/summary',
+    name: 'summary',
+    component: SummaryGraphs
   }
 ]
 

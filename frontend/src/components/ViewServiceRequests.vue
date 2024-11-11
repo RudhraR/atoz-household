@@ -1,5 +1,5 @@
 <template>
-  <div class="container" style="margin-top: 20px;" v-if="filteredServiceRequests.length > 0">
+  <div class="container" style="margin-top: 20px;" v-if="filteredServiceRequests && filteredServiceRequests.length > 0">
     <table class="table caption-top border">
       <caption>
         <h5>Open Requests: </h5>
@@ -168,7 +168,7 @@
 
 
   <!-- Display closed requests -->
-  <div class="container" style="margin-top: 20px;" v-if="closedRequests.length > 0">
+  <div class="container" style="margin-top: 20px;" v-if="closedRequests && closedRequests.length > 0">
     <table class="table caption-top border">
       <caption>
         <h5>Closed Requests: </h5>
@@ -237,7 +237,8 @@ export default {
       }
       else {
         if (this.user.role === "admin") {
-          return this.serviceRequests;
+          return this.serviceRequests.filter(
+            request => request.status === 'requested' || request.status === 'accepted');
         } else if (this.user.role === "customer") {
           return this.serviceRequests.filter(
             request => request.customer_id === this.user.id && request.status === 'requested' || request.status === 'accepted'
@@ -267,6 +268,13 @@ export default {
               request.assigned_professional === this.user.username &&
               (request.status === 'closed' || request.status === 'rejected' || request.status === 'completed')
           );
+        }
+        else if(this.user.role === "admin") {
+          return this.serviceRequests.filter(
+            request =>
+              request.status === 'closed' || request.status === 'rejected' || 
+              request.status === 'completed' || request.status === 'cancelled'
+          )
         }
       }
     }
@@ -361,6 +369,8 @@ export default {
       if(status === 'completed') {
         formData.append('rating', this.serviceRating);
         formData.append('remarks', this.remarks);
+        const serviceRemarksModal = bootstrap.Modal.getInstance(this.$refs.serviceRemarksModal);   // Initialize Bootstrap Modal
+      serviceRemarksModal.hide();
       }
       for (let [key, value] of formData.entries()) {
     console.log(`${key}: ${value}`);
