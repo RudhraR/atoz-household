@@ -118,7 +118,7 @@ router.beforeEach(async (to, from, next) => {
     if (to.matched.some((record) => record.meta.requiresAuth)) {
       if (!loginDetails || !loginDetails.isLoggedin) {
         next({ path: '/' });  // Redirect to login page
-      } else if (to.meta.role && to.meta.role !== loginDetails.role) {
+      } else if (to.meta.role && to.meta.role != loginDetails.role) {
         next({ path: '/' });  // Redirect if roles don't match
       } else {
         next();  // Proceed if everything checks out

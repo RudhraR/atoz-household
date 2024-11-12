@@ -1,6 +1,6 @@
 <template>
-  <div class="container" style="margin-top: 20px;" v-if="filteredServiceRequests && filteredServiceRequests.length > 0">
-    <table class="table caption-top border">
+  <div class="container" style="margin-top: 20px;">
+    <table class="table caption-top border" v-if="filteredServiceRequests && filteredServiceRequests.length > 0">
       <caption>
         <h5>Open Requests: </h5>
       </caption>
@@ -49,12 +49,9 @@
           </tr>
 
         </template>
+
       </tbody>
     </table>
-  </div>
-
-  <div class="container" style="margin-top: 20px;" v-else>
-    <p class="text-muted"><i>No service requests found.</i></p>
   </div>
 
   
@@ -236,14 +233,14 @@ export default {
         return [];
       }
       else {
-        if (this.user.role === "admin") {
+        if (this.user && this.user.role === "admin") {
           return this.serviceRequests.filter(
             request => request.status === 'requested' || request.status === 'accepted');
-        } else if (this.user.role === "customer") {
+        } else if (this.user && this.user.role === "customer") {
           return this.serviceRequests.filter(
             request => request.customer_id === this.user.id && request.status === 'requested' || request.status === 'accepted'
           );
-        } else if (this.user.role === "professional") {
+        } else if (this.user&& this.user.role === "professional") {
           return this.serviceRequests.filter(
             request => request.assigned_professional === this.user.username && request.status === 'requested' || request.status === 'accepted'
           );
@@ -255,21 +252,21 @@ export default {
         return [];
       }
       else {
-        if (this.user.role === "customer") {
+        if (this.user && this.user.role === "customer") {
           return this.serviceRequests.filter(
             request =>
               request.customer_id === this.user.id &&
               (request.status === 'cancelled' || request.status === 'completed' || request.status === 'rejected')
           )
         }
-        else if (this.user.role === "professional") {
+        else if (this.user && this.user.role === "professional") {
           return this.serviceRequests.filter(
             request =>
               request.assigned_professional === this.user.username &&
               (request.status === 'closed' || request.status === 'rejected' || request.status === 'completed')
           );
         }
-        else if(this.user.role === "admin") {
+        else if(this.user && this.user.role === "admin") {
           return this.serviceRequests.filter(
             request =>
               request.status === 'closed' || request.status === 'rejected' || 

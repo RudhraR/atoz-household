@@ -1,10 +1,11 @@
-from flask import Flask, jsonify, request, send_file, send_from_directory
+from flask import Flask, jsonify, render_template, request, send_file, send_from_directory
 from sqlalchemy import func
 from config import Config
 from models import *
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager, get_jwt_identity, jwt_required, create_access_token, unset_jwt_cookies
 from werkzeug.utils import secure_filename
+from flask_caching import Cache
 import os
 
 app = Flask(__name__)
@@ -14,6 +15,8 @@ app.config.from_object(Config)
 db.init_app(app)
 bcrypt.init_app(app)
 jwt = JWTManager(app)
+cache = Cache(app)
+# app.cache = cache
 
 def create_admin():
     existing_admin = User.query.filter_by(role="admin").first()
@@ -37,10 +40,15 @@ with app.app_context():
 
 CORS(app, supports_credentials=True)
 
-#Testing routes
+
 @app.route("/")
-def hello():
-    return "Hello world!"
+def home():
+    return render_template("index.html")
+
+@app.get('/cache')
+@cache.cached(timeout=5)
+def test_cache():
+    return {'time': str(datetime.now())}
 
 @app.route("/register", methods=["POST"])
 def register():
@@ -123,6 +131,7 @@ def protected():
     
     return "Hey {user.username}, you can access this resource", 200
 
+
 @app.route('/getuserdata', methods=['GET'])
 @jwt_required()
 def getuserdata():
@@ -189,9 +198,13 @@ def create_category():
     new_category = Category(name=name, categoryImage=image_filename)
     db.session.add(new_category)
     db.session.commit()
+    # Clear the cached categories data after creating a new category
+    cache.delete('categories')
     return jsonify({'message': 'Category created'}), 201
 
 @app.route('/categories', methods=['GET'])
+@jwt_required()
+@cache.cached(timeout=30, key_prefix='categories')
 def get_categories():
     categories = Category.query.all()
     categories_data = [{'id': category.id, 'name': category.name, 
@@ -233,6 +246,9 @@ def update_category(id):
         category.categoryImage = image_filename
     db.session.add(category)
     db.session.commit()
+    
+    # Clear the cached categories data after updating a category
+    cache.delete('categories')
     return jsonify({'message': 'Category updated'})
 
 @app.route('/categories/<int:id>', methods=['DELETE'])
@@ -250,12 +266,16 @@ def delete_category(id):
         if category.categoryImage:
             os.remove(app.config["CATEGORY_IMAGES"] + "/" + category.categoryImage)
         db.session.commit()
+         
+        # Clear the cached categories data after deleting a category
+        cache.delete('categories')
         return jsonify({"message":"Category deleted successfully"}), 200
     except Exception as e:
         db.session.rollback()
         return jsonify({"Exception":str(e)}), 500
     
 @app.route('/categories/<int:category_id>/services', methods=['GET'])
+@cache.memoize(timeout=10)
 def get_services_by_category(category_id):
     category = Category.query.get_or_404(category_id)
     services_data = [{'id': service.id, 'name': service.name,
@@ -265,6 +285,7 @@ def get_services_by_category(category_id):
 
 #fetch one service details
 @app.route('/service/<int:id>', methods=['GET'])
+@cache.memoize()
 def get_service(id):
     service = Service.query.get_or_404(id)
     service_data = {
@@ -278,6 +299,7 @@ def get_service(id):
     return jsonify({"message":"Service found","service":service_data}), 200
 #Fetch one category details
 @app.route('/categories/<int:id>', methods=['GET'])
+@cache.memoize()
 def get_category(id):
     category = Category.query.get_or_404(id)
     return jsonify({'category': {
@@ -302,9 +324,13 @@ def create_service():
     )
     db.session.add(new_service)
     db.session.commit()
+    
+    # Clear the cached services data after creating a new service
+    cache.delete('services')
     return jsonify({'message': 'Service created'}), 201
 
 @app.route('/services', methods=['GET'])
+@cache.cached(timeout=30, key_prefix='services')
 def get_services():
     services = Service.query.all()
     service_data =[]
@@ -334,6 +360,9 @@ def update_service(id):
     service.time_required = data['time_required']
     service.category_id = data['category_id']
     db.session.commit()
+    
+    # Clear the cached services data after updating service
+    cache.delete('services')
     return jsonify({'message': 'Service updated'})
 
 @app.route('/services/<int:id>', methods=['DELETE'])
@@ -345,11 +374,15 @@ def delete_service(id):
     service = Service.query.get_or_404(id)
     db.session.delete(service)
     db.session.commit()
+    
+    # Clear the cached services data after deleting a service
+    cache.delete('services')
     return jsonify({'message': 'Service deleted'})
 
 # Return list of all professionals
 @app.route('/professionals', methods=['GET'])
 @jwt_required()
+@cache.cached(timeout=30, key_prefix='professionals')
 def get_professionals():
     current_user = get_jwt_identity()
     if current_user["role"] != "admin":
@@ -400,10 +433,15 @@ def approve_or_delete_professionals(id):
         os.remove(app.config["RESUME_FOLDER"] + "/" + professional.resume)
         db.session.commit()
         return jsonify({'message': 'Professional rejected'})
+    
+    # Clear the cached professionals data after updating/deleting professional
+    cache.delete('professionals')
     return jsonify({'message': 'Invalid request'})
 
 #View resume pdf of professionals
 @app.route("/view_resume/<int:id>", methods=["GET"])
+@jwt_required()
+@cache.memoize()
 def view_catalogue(id):
     professional = User.query.filter_by(id=id).first() 
     if not professional:
@@ -416,6 +454,7 @@ def view_catalogue(id):
 # Return list of all customers
 @app.route('/customers', methods=['GET'])
 @jwt_required()
+@cache.cached(timeout=10, key_prefix='customers')
 def get_customers():
     current_user = get_jwt_identity()
     if current_user["role"] != "admin":
@@ -442,6 +481,9 @@ def delete_user(id):
     if user:
         db.session.delete(user)
         db.session.commit()
+        
+        # Clear the cached customers data after deleting a customer
+        cache.delete('customers')
         return jsonify({'message': 'User deleted'})
     else:
         return jsonify({'message': 'User not found'}), 404
@@ -451,10 +493,6 @@ def delete_user(id):
 @app.route('/service_requests', methods=['POST'])
 def create_service_request():
     data = request.get_json()
-    
-    # Validate input
-    # if not all(key in data for key in ('service_id', 'customer_id')):
-    #     return jsonify({'error': 'Missing fields in request data'}), 400
     
     service_request = ServiceRequest(
         service_id=data['service_id'],
@@ -469,14 +507,19 @@ def create_service_request():
     try:
         db.session.add(service_request)
         db.session.commit()
+        
+        # Clear the cached service requests data after creating a service request
+        cache.delete('service_requests')
+        
     except Exception as e: 
         return jsonify({'error': str(e)}), 500
-
 
     return jsonify({'message': 'Service request created successfully', 'service_request_id': service_request.id}), 201
 
 #get professionals by their category
 @app.route('/professionals_by_category/<int:category_id>', methods=['GET'])
+@jwt_required()
+@cache.memoize()
 def get_professionals_by_category(category_id):
     professionals = User.query.filter_by(role='professional', services_provided=category_id).all()
     professional_data = []
@@ -494,6 +537,8 @@ def get_professionals_by_category(category_id):
 
 #Get all service requests
 @app.route('/service_requests', methods=['GET'])
+@jwt_required()
+@cache.cached(timeout=20, key_prefix='service_requests')
 def get_service_requests():
     service_requests = ServiceRequest.query.all()
     service_request_data = []
@@ -535,6 +580,9 @@ def update_service_request(id, status):
         service_request.service_status = 'completed'
         service_request.date_of_completion = datetime.now()
     db.session.commit()
+    
+    # Clear the cached service requests data after updating a service request
+    cache.delete('service_requests')
     return jsonify({'message': 'Service request'+status}), 200
 
 #Customer updating service requests
@@ -564,6 +612,9 @@ def update_service_request_customer(id, status):
             professional.rating = new_rating
             
     db.session.commit()
+    
+    # Clear the cached service requests data after updating a service request
+    cache.delete('service_requests')
     return jsonify({'message': 'Service request '+status}), 200
 
 @app.route('/service_requests/rebook/<int:id>', methods=['PUT'])
@@ -573,6 +624,9 @@ def rebook_service_request(id):
         return jsonify({'error': 'Service request not found'}), 404
     service_request.rebooked = True
     db.session.commit()
+    
+    # Clear the cached service requests data after updating a service request
+    cache.delete('service_requests')
     return jsonify({'message': 'Service request rebooked'}), 200
 
 #Reschedule service request
@@ -583,8 +637,10 @@ def reschedule_ServiceRequest(id):
         return jsonify({'error': 'Service request not found'}), 404
     
     service_request.date_of_request = datetime.fromisoformat(request.form.get('rescheduled_date'))
- 
     db.session.commit()
+    
+    # Clear the cached service requests data after updating a service request
+    cache.delete('service_requests')
     return jsonify({'message': 'Service request rescheduled'}), 200
 
 # Route handlers for search functionalities
@@ -718,8 +774,6 @@ def search_admin():
     return jsonify({'message': 'Invalid search'}), 400
 
 #Chart summary 
-
-
 @app.route('/request_summary', methods=['GET'])
 @jwt_required()
 def request_summary():
@@ -793,7 +847,6 @@ def ratings_summary():
     # Populate ratings summary with actual counts
     for rating, count in rated_requests:
         ratings_summary[str(int(rating))] = count
-    print("RAtings summary",ratings_summary)
     return jsonify(ratings_summary), 200
 
 if __name__ == "__main__":

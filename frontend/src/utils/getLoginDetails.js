@@ -17,7 +17,7 @@ export async function getLoginDetails() {
             console.log(data.error);
             return;
         }
-        return {'isLoggedin': true, 'role': data.user.role}
+        return {'isLoggedin': true, 'role': data.user.role, 'user': data.user};
     } catch (error) {
         console.log(error);
     }

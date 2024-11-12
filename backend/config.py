@@ -6,3 +6,8 @@ class Config:
     JWT_SECRET_KEY = "hello"
     RESUME_FOLDER = os.path.join(os.getcwd(), "professional_resume")
     CATEGORY_IMAGES = os.path.join(os.getcwd(), "category_images")
+    
+    CACHE_TYPE = "RedisCache"
+    CACHE_DEFAULT_TIMEOUT = 30
+    CACHE_REDIS_PORT = 6379
+    

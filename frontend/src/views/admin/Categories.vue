@@ -182,7 +182,11 @@ export default {
 
     },
     async fetchCategories() {
-      const response = await fetch('http://127.0.0.1:5000/categories');
+      const response = await fetch('http://127.0.0.1:5000/categories', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+        }
+      });
       const data = await response.json();
 
       if (!response.ok) {

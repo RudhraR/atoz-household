@@ -7,7 +7,8 @@ export default {
       };
     },
     async created() {
-      await this.checkAuth();
+      // await this.checkAuth();
+      await this.getUserDetails();
     },
     // watch: {
       // user(newVal) {
@@ -19,25 +20,30 @@ export default {
       // },
     // },
     methods: {
-      async checkAuth(){
-          const access_token = localStorage.getItem("access_token");
-          if (!access_token) {
-            this.isLoggedin = false;
-            this.user = null;
-            this.role = null;
-            return;
-          }
-            try {
-              this.user = await this.getUserDetails(); 
+      // async checkAuth(){
+      //     const access_token = localStorage.getItem("access_token");
+      //     if (!access_token) {
+      //       this.isLoggedin = false;
+      //       this.user = null;
+      //       this.role = null;
+      //       return;
+      //     }
+      //       try {
+      //         this.user = await this.getUserDetails(); 
+      //         this.isLoggedin = true;
+      //         this.role = this.user.role;
+      //         return this.user;
               
-            } catch (error) {
-              console.log(error);
-            }       
-      },
+      //       } catch (error) {
+      //         console.log(error);
+      //       }       
+      // },
       async getUserDetails() {
         if(!localStorage.getItem("access_token")) {
-          alert("Please log in to continue.");
-          window.location.href = "/";
+          // alert("Please log in to continue.");
+          console.log("Please log in to continue.");
+          // window.location.href = "/";
+          
           return null;
         }
         try{
@@ -52,11 +58,15 @@ export default {
           // console.log(data.message)
           if (!response.ok) {
             console.log(data.error);
+            this.isLoggedin = false;
+            this.user = null;
+            this.role = null;
             return null;
           } else {
-            console.log(data.message);
+            console.log("In usermixin", data.user);
             this.isLoggedin = true;
             this.role = data.user.role;
+            this.user = data.user;
             return data.user;
           }
       } catch (error) {
