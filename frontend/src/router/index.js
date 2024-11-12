@@ -14,9 +14,10 @@ import ViewServiceRequests from '@/components/ViewServiceRequests.vue'
 import ProfilePage from '@/views/ProfilePage.vue'
 import SearchPage from '@/views/SearchPage.vue'
 import SummaryGraphs from '@/views/SummaryGraphs.vue'
+import { getLoginDetails } from '@/utils/getLoginDetails.js';
+
 
 const routes = [
-
   {
     path: '/',
     name: 'home',
@@ -40,57 +41,68 @@ const routes = [
   {
     path: '/professional_dashboard',
     name: 'professional_dashboard',
-    component: ProfessionalDashboard
+    component: ProfessionalDashboard,
+    meta: {requiresAuth: true,role: 'professional'}
   },
   {
     path: '/categories',
     name: 'categories',
-    component: Categories
+    component: Categories,
+    meta: {requiresAuth: true,role: 'admin'}    
   },
   {
     path: '/services',
     name: 'services',
-    component: Services
+    component: Services,
+    meta: {requiresAuth: true,role: 'admin'}
   },
   {
     path: '/admin_dashboard',
     name: 'admin_dashboard',
-    component: AdminDashboard
+    component: AdminDashboard,
+    meta: {requiresAuth: true,role: 'admin'}
   },
   {
     path: '/customer_dashboard',
     name: 'customer_dashboard',
-    component: CustomerDashboard
+    component: CustomerDashboard,
+    meta: {requiresAuth: true,role: 'customer'}
   },
   {
     path: '/manage_users',
     name: 'manage_users',
-    component: Manage_users
+    component: Manage_users,
+    meta: {requiresAuth: true, role: 'admin'}
   },
   {
     path: '/book_service_request',
     name: 'book_service_request',
-    component: BookServiceRequest
+    component: BookServiceRequest,
+    meta: {requiresAuth: true, role: 'customer'}
   },
   {
     path: '/view_service_requests',
     name: 'view_service_requests',
-    component: ViewServiceRequests
+    component: ViewServiceRequests,
+    meta: {requiresAuth: true}
   },
   {
     path: '/profile',
     name: 'profile',
-    component: ProfilePage
+    component: ProfilePage,
+    meta: {requiresAuth: true}
   },
   {
     path: '/search',
     name: 'search',
-    component: SearchPage
+    component: SearchPage,
+    meta: {requiresAuth: true}
   },
   {
     path: '/summary',
     name: 'summary',
-    component: SummaryGraphs
+    component: SummaryGraphs,
+    meta: {requiresAuth: true}
   }
 ]
 
@@ -98,5 +110,27 @@ const router = createRouter({
   history: createWebHashHistory(),
   routes
 })
+
+router.beforeEach(async (to, from, next) => {
+  try {
+    const loginDetails = await getLoginDetails();
+    
+    if (to.matched.some((record) => record.meta.requiresAuth)) {
+      if (!loginDetails || !loginDetails.isLoggedin) {
+        next({ path: '/' });  // Redirect to login page
+      } else if (to.meta.role && to.meta.role !== loginDetails.role) {
+        next({ path: '/' });  // Redirect if roles don't match
+      } else {
+        next();  // Proceed if everything checks out
+      }
+    } else {
+      next();  // No auth required
+    }
+  } catch (error) {
+    console.error("Error fetching login details:", error);
+    next({ path: '/' });
+  }
+});
+
 
 export default router

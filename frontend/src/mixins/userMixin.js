@@ -29,6 +29,7 @@ export default {
           }
             try {
               this.user = await this.getUserDetails(); 
+              
             } catch (error) {
               console.log(error);
             }       
@@ -44,7 +45,7 @@ export default {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            Authorization: "Bearer " + localStorage.getItem("access_token"),
+            "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
           },
         });   
           const data = await response.json();
@@ -67,7 +68,7 @@ export default {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: "Bearer " + localStorage.getItem("access_token"),
+            "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
           },
         })
         const data = await response.json();
@@ -75,7 +76,6 @@ export default {
           alert(data.error);
         }
         else{
-          // alert(data.message);
           localStorage.removeItem("access_token");
           this.isLoggedin = false;
           this.user = null;
@@ -85,9 +85,7 @@ export default {
         }
   
       },
-      async setUser() {
-        await this.checkAuth();
-        // this.user = userData; // Method to set user data
-      },
+       
     },
   };
+  
