@@ -1,5 +1,7 @@
-from flask import Flask, jsonify, render_template, request, send_file, send_from_directory
+import csv
+from flask import Flask, Response, jsonify, make_response, request, send_file, send_from_directory
 from sqlalchemy import func
+from tools import workers, tasks, mailer
 from config import Config
 from models import *
 from flask_cors import CORS
@@ -7,16 +9,29 @@ from flask_jwt_extended import JWTManager, get_jwt_identity, jwt_required, creat
 from werkzeug.utils import secure_filename
 from flask_caching import Cache
 import os
+import io
+from celery.result import AsyncResult
 
 app = Flask(__name__)
 app.config.from_object(Config)
-
 
 db.init_app(app)
 bcrypt.init_app(app)
 jwt = JWTManager(app)
 cache = Cache(app)
-# app.cache = cache
+mailer.init_app(app)
+
+celery = workers.celery
+celery.conf.update(
+    broker_url=app.config['CELERY_BROKER_URL'],
+    result_backend=app.config['CELERY_RESULT_BACKEND'],
+    timezone='Asia/Kolkata',
+    enable_utc=False,
+    broker_connection_retry_on_startup = True
+)
+
+celery.Task = workers.ContextTask
+app.app_context().push()
 
 def create_admin():
     existing_admin = User.query.filter_by(role="admin").first()
@@ -40,15 +55,33 @@ with app.app_context():
 
 CORS(app, supports_credentials=True)
 
+@app.route("/celery-test")
+def celery_test():
+    task = tasks.add.delay(1,2)
+    return {"task_id":task.id}
 
+@app.route("/get-celery-result/<task_id>")
+def getCeleryResult(task_id):
+    result = AsyncResult(task_id, app=celery)
+    if result.ready():
+        return {"result":result.result}, 200
+    else:
+        return {"message": "Task not yet completed"}, 405
+    
 @app.route("/")
 def home():
-    return render_template("index.html")
+    # result = tasks.sendHello.delay(1)
+    # print(result.get())
+    # tasks.add.delay()
+    mailer.send_email('admin@store.com', 'Hello', 'Hello world')
+    return "Hello World"
+
 
 @app.get('/cache')
 @cache.cached(timeout=5)
 def test_cache():
     return {'time': str(datetime.now())}
+
 
 @app.route("/register", methods=["POST"])
 def register():
@@ -848,6 +881,24 @@ def ratings_summary():
     for rating, count in rated_requests:
         ratings_summary[str(int(rating))] = count
     return jsonify(ratings_summary), 200
+
+@app.route('/generate_csv_report', methods=['GET'])
+@jwt_required()
+def generate_report():
+    task = tasks.generate_csv_report.delay()
+    return jsonify({'task_id': task.id}), 200
+
+@app.route('/download_report/<task_id>', methods=['GET'])
+def download_report(task_id):
+    result = AsyncResult(task_id, app=celery)
+    if result.ready():
+        filename=result.get()
+        if "/mnt/d" in filename:
+            filename = result.get().replace("/mnt/d", "")
+        return send_file(filename, as_attachment=True), 200
+    else:
+        return {"message": "Task not yet completed"}, 405
+    
 
 if __name__ == "__main__":
     app.run(debug=True)

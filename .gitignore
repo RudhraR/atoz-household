@@ -2,3 +2,9 @@ backend/__pycache__
 backend/instance
 frontend/node_modules
 .venv
+backend/celerybeat-schedule
+backend/service_requests.csv
+backend/csv_reports/service_requests_2024-11-15.csv
+backend/tools/__pycache__/mailer.cpython-312.pyc
+backend/tools/__pycache__/tasks.cpython-312.pyc
+backend/tools/__pycache__/workers.cpython-312.pyc

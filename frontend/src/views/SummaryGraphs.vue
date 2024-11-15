@@ -1,5 +1,7 @@
 <template>
   <NavBar />
+  <div class="container">
+
   <div class="row" style="margin-top: 80px;">
     <div class="col-sm-6">
     <canvas id="summaryGraph"></canvas>
@@ -8,6 +10,8 @@
     <canvas style="height: 50%; width:50%" id="ratingsDoughnutChart"></canvas>
     </div>
   </div>
+  <button v-if="this.user && this.user.role == 'admin'" @click="generateCSVReport" class="btn btn-dark mt-4">Download Report as CSV</button>
+</div>
 </template>
 
 <script>
@@ -165,6 +169,26 @@ export default {
       },
     });
   },
+
+  async generateCSVReport(){
+      const res = await fetch("http://127.0.0.1:5000/generate_csv_report",{
+          method:"GET",
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+          },
+      })
+      const task_id = (await res.json()).task_id
+      const interval = setInterval(async()=>{
+        const res = await fetch(`http://127.0.0.1:5000/download_report/${task_id}`)
+        if(res.ok){
+          console.log('CSV report generated successfully');
+          alert("CSV report generated successfully")
+          window.location.href = `http://127.0.0.1:5000/download_report/${task_id}`
+          clearInterval(interval)
+        }
+      }, 100)
+  }
+
 },
 
 };
