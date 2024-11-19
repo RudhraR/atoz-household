@@ -7,5 +7,5 @@ def init_app(app):
     
 def send_email(to, subject, body):
     sender = "noreply@store.com"
-    msg = Message(subject, sender=sender, recipients=[to], html=body)
+    msg = Message(subject=subject, sender=sender, recipients=[to], html=body)
     mail.send(msg)

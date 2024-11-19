@@ -2,8 +2,8 @@
     <nav class="navbar navbar-expand-lg bg-body-tertiary sticky-top">
       <div class="container-fluid">
         <a class="navbar-brand" href="#">
-            <button class="btn btn-info"><h4>A - Z</h4></button>
-    </a>
+            <img src="../assets/logo.png" alt="Logo" width="100" height="50">
+        </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarText" aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>

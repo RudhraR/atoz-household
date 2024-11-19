@@ -170,24 +170,71 @@ export default {
     });
   },
 
-  async generateCSVReport(){
-      const res = await fetch("http://127.0.0.1:5000/generate_csv_report",{
-          method:"GET",
-          headers: {
+  // async generateCSVReport(){
+  //     const res = await fetch("http://127.0.0.1:5000/generate_csv_report",{
+  //         method:"GET",
+  //         headers: {
+  //           'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+  //         },
+  //     })
+  //     const task_id = (await res.json()).task_id
+  //     const interval = setInterval(async()=>{
+  //       const res = await fetch(`http://127.0.0.1:5000/download_report/${task_id}`)
+  //       if(res.ok){
+  //         console.log('CSV report generated successfully');
+  //         alert("CSV report generated successfully")
+  //         window.location.href = `http://127.0.0.1:5000/download_report/${task_id}`
+  //         clearInterval(interval)
+  //       }
+  //     }, 100)
+  // }
+  async generateCSVReport() {
+    const res = await fetch("http://127.0.0.1:5000/generate_csv_report", {
+        method: "GET",
+        headers: {
             'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-          },
-      })
-      const task_id = (await res.json()).task_id
-      const interval = setInterval(async()=>{
-        const res = await fetch(`http://127.0.0.1:5000/download_report/${task_id}`)
-        if(res.ok){
-          console.log('CSV report generated successfully');
-          alert("CSV report generated successfully")
-          window.location.href = `http://127.0.0.1:5000/download_report/${task_id}`
-          clearInterval(interval)
+        },
+    });
+
+    const task_id = (await res.json()).task_id;
+
+    let isDownloaded = false; // Flag to ensure the download happens only once
+
+    const interval = setInterval(async () => {
+        if (isDownloaded) return; // Skip if the download is already triggered
+
+        const res = await fetch(`http://127.0.0.1:5000/download_report/${task_id}`, {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+            },
+        });
+
+        if (res.ok) {
+            isDownloaded = true; // Set the flag to prevent further downloads
+            console.log('CSV report generated successfully');
+            alert("CSV report generated successfully");
+
+            // Fetch the file as a Blob for download
+            const contentDisposition = res.headers.get('Content-Disposition');
+            console.log(contentDisposition);
+            const filename = contentDisposition
+                ? contentDisposition.split('filename=')[1].replace(/"/g, '')
+                : 'report.csv';
+            const blob = await res.blob();
+
+            // Create a temporary download link
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+
+            // Trigger the download
+            link.click();
+
+            // Clear the interval to stop further checks
+            clearInterval(interval);
         }
-      }, 100)
-  }
+    }, 1000); // Checking every 1 second
+}
 
 },
 

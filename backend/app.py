@@ -40,7 +40,7 @@ def create_admin():
         return jsonify({"message":"Admin already exists"}), 200
     
     try:
-        admin = User(username="admin", email="admin@gmail.com", role="admin", password="pass")
+        admin = User(username="admin", email="admin@atoz.com", role="admin", password="pass")
         db.session.add(admin)
         db.session.commit()
         return jsonify({"message":"Admin created successfully"}), 201
@@ -53,7 +53,7 @@ with app.app_context():
     db.create_all()
     create_admin()
 
-CORS(app, supports_credentials=True)
+CORS(app, supports_credentials=True, expose_headers=["Content-Disposition"])
 
 @app.route("/celery-test")
 def celery_test():
@@ -70,17 +70,7 @@ def getCeleryResult(task_id):
     
 @app.route("/")
 def home():
-    # result = tasks.sendHello.delay(1)
-    # print(result.get())
-    # tasks.add.delay()
-    mailer.send_email('admin@store.com', 'Hello', 'Hello world')
     return "Hello World"
-
-
-@app.get('/cache')
-@cache.cached(timeout=5)
-def test_cache():
-    return {'time': str(datetime.now())}
 
 
 @app.route("/register", methods=["POST"])
@@ -236,7 +226,6 @@ def create_category():
     return jsonify({'message': 'Category created'}), 201
 
 @app.route('/categories', methods=['GET'])
-@jwt_required()
 @cache.cached(timeout=30, key_prefix='categories')
 def get_categories():
     categories = Category.query.all()
@@ -473,8 +462,6 @@ def approve_or_delete_professionals(id):
 
 #View resume pdf of professionals
 @app.route("/view_resume/<int:id>", methods=["GET"])
-@jwt_required()
-@cache.memoize()
 def view_catalogue(id):
     professional = User.query.filter_by(id=id).first() 
     if not professional:
@@ -889,13 +876,17 @@ def generate_report():
     return jsonify({'task_id': task.id}), 200
 
 @app.route('/download_report/<task_id>', methods=['GET'])
+@jwt_required()
 def download_report(task_id):
     result = AsyncResult(task_id, app=celery)
     if result.ready():
-        filename=result.get()
-        if "/mnt/d" in filename:
-            filename = result.get().replace("/mnt/d", "")
-        return send_file(filename, as_attachment=True), 200
+        filepath=result.get()
+        if "/mnt/d" in filepath:
+            filepath = filepath.replace("/mnt/d", "")
+        filename = filepath.split('/')[-1]
+        response = make_response(send_file(filepath, as_attachment=True))
+        response.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response, 200
     else:
         return {"message": "Task not yet completed"}, 405
     

@@ -124,7 +124,11 @@ export default {
                     console.error("No category ID found in service details.");
                     return;
                 }
-                const response = await fetch(`http://127.0.0.1:5000/professionals_by_category/${categoryId}`); // Fetch professionals based on role and category
+                const response = await fetch(`http://127.0.0.1:5000/professionals_by_category/${categoryId}`, {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+                    },
+                }); 
                 const data = await response.json();
                 this.professionals = data.professionals; // Assign the filtered professionals to the list
                 console.log(this.professionals);

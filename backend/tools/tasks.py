@@ -1,6 +1,7 @@
 from datetime import timedelta
 from flask import current_app as app
 from flask import render_template
+from sqlalchemy import or_
 from tools.workers import celery
 from models import *
 from celery.schedules import crontab
@@ -10,39 +11,30 @@ import io, os, csv
 
 @celery.on_after_finalize.connect
 def setup_periodic_tasks(sender, **kwargs):
-    # sender.add_periodic_task(crontab(hour=10, minute=00), send_daily_mail.s(), name="Send email every 30 secs")
-    sender.add_periodic_task(30, monthly_report.s(), name="Send monthly report")
+    sender.add_periodic_task(crontab(hour=18, minute=00), send_daily_mail.s(), name="Daily reminder")
+    sender.add_periodic_task(40, monthly_report.s(), name="Monthly reminder")
+    # sender.add_periodic_task(crontab(day_of_month=1), monthly_report.s(), name="Sending monthly report")
     # crontab: daily: hour&minute, weekly: day_of_week = which day(1/2/...), monthly: day_of_month: which date in a month(1/2/..)
     #for every ten seconds: seconds='*/10'
 
-@celery.task
-def add(x,y):
-    return (x+y)  
-
-@celery.task
-def sendHello(userId):
-    user = User.query.filter_by(id=userId).first()
-    return "Hi " + user.username
-
-@celery.task
-def sendMail():
-    users = User.query.all()
-    for user in users:
-        print(f"Sending email to user {user.username}")
-    return "Email sent successfully"
 
 #Daily reminders to the ones who have not logged in last 24 hours
 @celery.task
 def send_daily_mail():
     twenty_four_hours_ago = datetime.now() - timedelta(hours=24)
-    users = User.query.filter(User.lastLoggedIn < twenty_four_hours_ago).filter(User.role == 'professional').all()
-    message = "Hey.. You are getting this email because you have not logged in last 24 hours"
+    
+    users = User.query.outerjoin(ServiceRequest, ServiceRequest.professional_id == User.id
+        ).filter(User.role == 'professional', or_( User.lastLoggedIn < twenty_four_hours_ago,  
+                                            ServiceRequest.service_status == 'requested')).all()
+    message = "You are getting this email because: Either you have not logged in for the last 24 hours or having pending service requests."
     count=0
     for user in users:
-        html = render_template("daily_email.html", user=user, message=message)
-        send_email(user.email, "Daily Reminder: Inactive user", html)
+        service_requests = ServiceRequest.query.filter_by(professional_id=user.id, 
+                                                          service_status='requested').all()
+        html = render_template("daily_email.html", user=user, message=message, service_requests=service_requests)
+        send_email(user.email, "Daily reminder from A-Z", html)
         count +=1
-    return f"Reminder sent to {count} inactive users"
+    return f"Reminder sent to {count} professionals"
     
 @celery.task
 def monthly_report():
@@ -52,19 +44,19 @@ def monthly_report():
     for user in users:
         user_services = ServiceRequest.query.filter_by(customer_id=user.id
                         ).filter(ServiceRequest.date_of_request < one_month_ago
-                                 ).filter(ServiceRequest.service_status == "completed").all()
+                                 ).filter(ServiceRequest.service_status != "rejected" ).all()
         service_details = []
-        total_amount_spent = 0
         
         for service in user_services:
             service_details.append({
                 "service_name": service.service.name,
-                "price": service.service.price,
-                "date_of_request": service.date_of_request
+                "category": service.service.category.name,
+                "date_of_request": service.date_of_request,
+                "status": service.service_status,
+                "id": service.id
             })
-            total_amount_spent += service.service.price
             
-        html = render_template("monthly_report.html", user=user, services=service_details, total_amount_spent=total_amount_spent)
+        html = render_template("monthly_report.html", user=user, services=service_details)
         send_email(user.email, "Monthly Report", html)
         
     return f"Monthly report sent to {len(users)} users" 
