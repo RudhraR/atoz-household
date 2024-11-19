@@ -1,6 +1,7 @@
 <template>
   <div class="card shadow">
     <div class="card-body">
+      <form @submit.prevent="register">
       <!-- Username field -->
       <div class="form-group mb-3">
         <input v-model="username" type="text" class="form-control" placeholder="Name" required />
@@ -36,8 +37,10 @@
         <div v-if="mobileError" class="text-danger">{{ mobileError }}</div>
       </div>
 
-      <button class="btn btn-primary w-100" @click="register">Submit</button>
+      <button type="submit" class="btn btn-primary w-100">Submit</button>
+    </form>
     </div>
+
   </div>
 </template>
 

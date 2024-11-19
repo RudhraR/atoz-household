@@ -21,6 +21,9 @@
                 <td><strong>Email:</strong></td> <td>{{ userDetails.email }}</td>
               </tr>
               <tr>
+                <td><strong>Mobile:</strong></td> <td>{{ userDetails.mobile }}</td>
+              </tr>
+              <tr>
                 <td><strong>Address:</strong></td> <td>{{ userDetails.address }}</td>
               </tr>
               <tr>

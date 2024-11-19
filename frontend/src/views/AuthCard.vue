@@ -4,19 +4,10 @@
       <div class="card-header">
         <ul class="nav nav-tabs card-header-tabs">
           <li class="nav-item">
-            <a
-              class="nav-link"
-              :class="{ active: isLogin }"
-              @click="showLogin"
-              href="#"
-            >User Login</a>
+            <a class="nav-link" :class="{ active: isLogin }" @click="showLogin" href="#">User Login</a>
           </li>
           <li class="nav-item ms-auto">
-            <a
-              class="nav-link"
-              :class="{ active: !isLogin }"
-              @click="showRegister"
-              href="#"
+            <a class="nav-link" :class="{ active: !isLogin }" @click="showRegister" href="#"
             >Register as new customer</a>
           </li>
         </ul>

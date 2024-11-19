@@ -11,7 +11,7 @@
       <div class="card shadow border-dark">
         <h5 class="card-header text-white bg-secondary">Looking for?</h5>
         <div class="card-body">
-          <div class="row">
+          <div class="row" v-if="categoriesWithServices && categoriesWithServices.length > 0">
             <div v-for="category in categoriesWithServices" :key="category.id" class="col-sm-2">
               <div class="card" @click="setCurrentCategory(category)" style="cursor: pointer;" data-bs-toggle="modal"
                 data-bs-target="#viewCategoryModal">
@@ -22,6 +22,7 @@
               </div>
             </div>
           </div>
+          <p v-else class="text-muted text-center"><i>No services are available right now!</i></p>
         </div>
       </div>
     </div>

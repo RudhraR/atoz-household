@@ -8,7 +8,7 @@
             </button>
       </h5>
       <div class="card-body">
-        <table class="table">
+        <table class="table" v-if="categories && categories.length > 0">
           <thead>
             <tr>
               <th scope="col">#</th>
@@ -36,6 +36,7 @@
             </tr>
           </tbody>
         </table>
+        <p v-else class="text-muted text-center"><i>No categories found</i></p>
       </div>
     </div>
     
@@ -48,10 +49,11 @@
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
+            <form @submit.prevent="addCategory">
             <div class="form-group mb-3 row">
               <label for="categoryName" class="col-sm-3 col-form-label">Category Name</label>
               <div class="col-sm-9">
-                <input v-model="categoryName" class="form-control" placeholder="Category Name" />
+                <input v-model="categoryName" class="form-control" placeholder="Category Name" required/>
               </div>
             </div>
             <div class="form-group mb-3 row">
@@ -63,8 +65,9 @@
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-              <button type="button" class="btn btn-success" @click="addCategory">Add category</button>
+              <button type="submit" class="btn btn-success">Add category</button>
             </div>
+          </form>
           </div>
         </div>
       </div>
@@ -198,12 +201,21 @@ export default {
 }));
       }
     },
+    async clearFields() {
+        this.categoryName = '';
+        this.categoryImage = null;
+        this.currentCategoryImage = null;
+        this.currentCategoryName = '';
+        this.currentCategoryImagePath = null;
+
+    },
     async addCategory() {
       if (!this.categoryName) return;
       try{
         const formData = new FormData();
         formData.append('categoryImage', this.categoryImage);
         formData.append('name', this.categoryName);
+        
         const response = await fetch('http://127.0.0.1:5000/categories', {
           method: 'POST',
           headers: {
@@ -215,13 +227,14 @@ export default {
         if (!response.ok) {
           alert(data.error);
         } else {
-          this.categoryName = '';
-          this.categoryImage = null;
+          this.clearFields();
+          const fileInput = document.getElementById('categoryImage');
+          fileInput.value = '';
           // Close the modal programmatically after saving
           const modalElement = document.getElementById('addCategoryModal');
           const modal = bootstrap.Modal.getInstance(modalElement); // Get the modal instance
           modal.hide(); // Hide the modal
-
+          
           this.fetchCategories();
         }
       } catch (error) {
@@ -260,11 +273,8 @@ export default {
         body: formData
       });
 
+      this.clearFields();
       // Close the modal programmatically after saving
-      
-      this.currentCategoryImage = null;
-      this.currentCategoryName = '';
-      this.currentCategoryImagePath = null;
       const modalElement = document.getElementById('editCategoryModal');
       const modal = bootstrap.Modal.getInstance(modalElement); // Get the modal instance
       modal.hide(); // Hide the modal

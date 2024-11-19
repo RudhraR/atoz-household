@@ -4,7 +4,7 @@
       <h1>Welcome {{ this.user.username }}</h1>
   </div> -->
   <div>
-    <CustomerDashboard v-if="user && user.role == 'customer'" />
+    <CustomerDashboard v-if="user && user.role == 'customer' && user.is_active " />
     <AdminDashboard v-else-if="user && user.role == 'admin'"/>
     <ProfessionalDashboard v-else-if="user && user.role == 'professional' && user.is_active"/>
     <AuthCard v-else />

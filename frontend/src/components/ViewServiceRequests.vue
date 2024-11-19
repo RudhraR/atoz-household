@@ -1,6 +1,6 @@
 <template>
-  <div class="container" style="margin-top: 20px;">
-    <table class="table caption-top border" v-if="filteredServiceRequests && filteredServiceRequests.length > 0">
+  <div class="container" style="margin-top: 20px;" v-if="filteredServiceRequests && filteredServiceRequests.length > 0">
+    <table class="table caption-top border">
       <caption>
         <h5>Open Requests: </h5>
       </caption>
@@ -9,32 +9,33 @@
           <th>Request #</th>
           <th>Category</th>
           <th>Service Name</th>
-          <th v-if="user.role != 'customer'">Customer Name</th>
-          <th v-if="user.role != 'professional'">Assigned Professional</th>
+          <th v-if="role != 'customer'">Customer Name</th>
+          <th v-if="role != 'professional'">Assigned Professional</th>
           <th>Booked on</th>
           <th>Status</th>
-          <th v-if="user.role != 'admin'">Actions</th>
+          <th v-if="role != 'admin'">Actions</th>
         </tr>
       </thead>
       <tbody>
-        <template v-for="(request) in filteredServiceRequests" :key="request.id">
-          <tr>
+        <tr v-if="filteredServiceRequests && filteredServiceRequests.length > 0" 
+          v-for="(request) in filteredServiceRequests" :key="request.id">
+          
             <th>{{ request.id }}</th>
             <td>{{ request.category }}</td>
             <td>{{ request.service_name }}</td>
-            <td v-if="user.role != 'customer'">{{ request.customer_name }}</td>
-            <td v-if="user.role != 'professional'">{{ request.assigned_professional }}</td>
+            <td v-if="role != 'customer'">{{ request.customer_name }}</td>
+            <td v-if="role != 'professional'">{{ request.assigned_professional }}</td>
             <td>{{ request.booked_on }}</td>
             <td>{{ request.status }}</td>
 
-            <td v-if="user.role == 'professional'">
+            <td v-if="role == 'professional'">
               <button v-if="request.status === 'requested'" class="btn btn-primary btn-sm"
                 @click="updateRequest(request.id, 'accepted')">Accept</button>
               <button class="btn btn-danger btn-sm" @click="updateRequest(request.id, 'rejected')">Reject</button>
               <button v-if="request.status === 'accepted'" class="btn btn-success btn-sm"
                 @click="updateRequest(request.id, 'completed')">Complete</button>
             </td>
-            <td v-if="user.role == 'customer'">
+            <td v-if="role == 'customer'">
 
               <button v-if="request.status === 'accepted'" class="btn btn-success btn-sm"
                 @click="completeRequest(request)">Complete</button>
@@ -48,12 +49,54 @@
             </td>
           </tr>
 
-        </template>
-
       </tbody>
     </table>
   </div>
+  <div v-else>
+    <p class="text-muted text-center"><i>No service requests found</i></p>
+  </div>
 
+
+  <!-- Display closed requests -->
+  <div class="container" style="margin-top: 20px;" v-if="closedRequests && closedRequests.length > 0">
+    <table class="table caption-top border">
+      <caption>
+        <h5>Closed Requests: </h5>
+      </caption>
+      <thead>
+        <tr>
+          <th>Request #</th>
+          <th>Category</th>
+          <th>Service Name</th>
+          <th v-if="user.role != 'customer'">Customer Name</th>
+          <th v-if="user.role != 'professional'">Professional Name</th>
+          <th>Closed on</th>
+          <th>Status</th>
+          <th v-if="user.role == 'customer'">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <template v-for="(request) in closedRequests" :key="request.id">
+          <tr>
+            <th>{{ request.id }}</th>
+            <td>{{ request.category }}</td>
+            <td>{{ request.service_name }}</td>
+            <td v-if="user.role != 'customer'">{{ request.customer_name }}</td>
+            <td v-if="user.role != 'professional'">{{ request.assigned_professional }}</td>
+            <td>{{ request.closed_on }}</td>
+            <td>{{ request.status }}</td>
+            <td v-if="user.role == 'customer'">
+              <button v-if="request.status === 'rejected' && request.rebooked == false" class="btn btn-primary btn-sm"
+                @click="handleRetryClick(request)">Retry booking</button>
+              <p v-else style="margin: 0%;">N/A</p>
+            </td>
+
+          </tr>
+
+        </template>
+      </tbody>
+    </table>
+  </div>
   
   <!-- Reschedule service request Modal -->
   <div class="modal fade" id="rescheduleServiceModal" tabindex="-1" aria-hidden="true" ref="rescheduleServiceModal">
@@ -163,47 +206,6 @@
     </div>
   </div>
 
-
-  <!-- Display closed requests -->
-  <div class="container" style="margin-top: 20px;" v-if="closedRequests && closedRequests.length > 0">
-    <table class="table caption-top border">
-      <caption>
-        <h5>Closed Requests: </h5>
-      </caption>
-      <thead>
-        <tr>
-          <th>Request #</th>
-          <th>Category</th>
-          <th>Service Name</th>
-          <th v-if="user.role != 'customer'">Customer Name</th>
-          <th v-if="user.role != 'professional'">Professional Name</th>
-          <th>Closed on</th>
-          <th>Status</th>
-          <th v-if="user.role == 'customer'">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <template v-for="(request) in closedRequests" :key="request.id">
-          <tr>
-            <th>{{ request.id }}</th>
-            <td>{{ request.category }}</td>
-            <td>{{ request.service_name }}</td>
-            <td v-if="user.role != 'customer'">{{ request.customer_name }}</td>
-            <td v-if="user.role != 'professional'">{{ request.assigned_professional }}</td>
-            <td>{{ request.closed_on }}</td>
-            <td>{{ request.status }}</td>
-            <td v-if="user.role == 'customer'">
-              <button v-if="request.status === 'rejected' && request.rebooked == false" class="btn btn-primary btn-sm"
-                @click="handleRetryClick(request)">Retry booking</button>
-              <p v-else style="margin: 0%;">N/A</p>
-            </td>
-
-          </tr>
-
-        </template>
-      </tbody>
-    </table>
-  </div>
 
 </template>
 

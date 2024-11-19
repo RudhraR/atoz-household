@@ -4,11 +4,12 @@
     <div class="card shadow" style="width: 40rem;">
       <h5 class="card-header">Service Professional Registration</h5>
       <div class="card-body">
+        <form @submit.prevent="register">
         <!-- Username field -->
         <div class="form-group mb-3 row">
           <label for="username" class="col-sm-3 col-form-label">Name</label>
           <div class="col-sm-9">
-            <input v-model="username" type="text" id="username" class="form-control" placeholder="Your Name"/>
+            <input v-model="username" type="text" id="username" class="form-control" placeholder="Your Name" required/>
             <div v-if="usernameError" class="text-danger">{{ usernameError }}</div>
           </div>
         </div>
@@ -90,7 +91,8 @@
           </div>
         </div>
 
-        <button class="btn btn-primary" @click="register">Submit</button>
+        <button class="btn btn-primary" type="submit">Submit</button>
+        </form>
       </div>
     </div>
   </div>

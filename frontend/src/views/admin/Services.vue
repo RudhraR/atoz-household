@@ -10,7 +10,7 @@
         </h5>
       </div>
       <div class="card-body">
-        <table class="table">
+        <table class="table" v-if="categoriesWithServices && categoriesWithServices.length > 0">
           <thead>
             <tr>
               <th>Category </th>
@@ -21,7 +21,7 @@
             </tr>
           </thead>
           <tbody>
-            <template v-for="(category, index) in categoriesWithServices" :key="category.id">
+            <template v-for="(category) in categoriesWithServices" :key="category.id">
               <tr>
                 <th>{{ category.name }}:</th>
                 <td></td>
@@ -44,6 +44,7 @@
             </template>
           </tbody>
         </table>
+        <p v-else class="text-muted text-center"><i>No services found</i></p>
       </div>
     </div>
 

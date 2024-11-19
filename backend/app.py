@@ -135,6 +135,8 @@ def login():
     if not user or not bcrypt.check_password_hash(user.password, password):
         return jsonify({"error": "Invalid credentials"}), 401
     
+    if user.is_active == False:
+        return jsonify({"error": "Your profile access is disabled. Kindly contact admin for more details."}), 401
     access_token = create_access_token(identity={"email":email, "role":user.role, "id":user.id})
    
     user.lastLoggedIn = datetime.now()
@@ -420,7 +422,8 @@ def get_professionals():
             'resume': professional.resume,
             'experience': professional.experience,
             'address': professional.address,
-            'pincode': professional.pincode
+            'pincode': professional.pincode,
+            'is_active': professional.is_active
         })
     
     new_professionals = User.query.filter_by(role='professional', is_active=False).all()
@@ -486,8 +489,10 @@ def get_customers():
             'id': customer.id,
             'username': customer.username,
             'email': customer.email,
+            'mobile': customer.mobile,
             'address': customer.address,
-            'pincode': customer.pincode
+            'pincode': customer.pincode,
+            'is_active': customer.is_active
         })
     return jsonify({'customers': customer_data}), 200
 
@@ -505,6 +510,29 @@ def delete_user(id):
         # Clear the cached customers data after deleting a customer
         cache.delete('customers')
         return jsonify({'message': 'User deleted'})
+    else:
+        return jsonify({'message': 'User not found'}), 404
+
+#Block users
+@app.route('/block_unblock_user/<int:id>/<string:status>', methods=['PUT'])
+@jwt_required()
+def block_user(id, status):
+    current_user = get_jwt_identity()
+    if current_user["role"] != "admin":
+        return jsonify({"message":"You are not authorized to access this resource"}), 403
+    user = User.query.filter_by(id=id).first()
+    if user:
+        if status == 'block':
+            user.is_active = False
+            db.session.commit()
+            cache.delete('customers') if user.role == 'customer' else cache.delete('professionals')
+            return jsonify({'message': 'User blocked'}), 200
+        elif status == 'unblock':
+            user.is_active = True
+            db.session.commit()
+            cache.delete('customers') if user.role == 'customer' else cache.delete('professionals')
+            return jsonify({'message': 'User unblocked'}), 200
+        
     else:
         return jsonify({'message': 'User not found'}), 404
 
