@@ -606,8 +606,8 @@ def get_service_requests():
             'role': service_request.customer.role,
             'professional_id': service_request.professional_id,
             'assigned_professional': service_request.professional.username,
-            'booked_on': service_request.date_of_request,
-            'closed_on': service_request.date_of_completion,
+            'booked_on': service_request.date_of_request.strftime('%d %b %Y, %I:%M %p') if service_request.date_of_request else service_request.date_of_request,
+            'closed_on': service_request.date_of_completion.strftime('%d %b %Y, %I:%M %p') if service_request.date_of_completion else service_request.date_of_completion,
             'status': service_request.service_status,
             'remarks': service_request.remarks,
             'rebooked': service_request.rebooked

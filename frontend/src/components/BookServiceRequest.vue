@@ -1,6 +1,6 @@
 <template>
     <div class="container" style="float:left;">
-        <form @submit.prevent="submitServiceRequest">
+        <form @submit.prevent="openPaymentModal">
 
             <!-- Service Name (prepopulated and disabled) -->
             <div class="form-group mb-3 row">
@@ -56,9 +56,56 @@
             </div>
 
             <!-- Submit Button -->
-            <button type="submit" class="btn btn-primary">Book Service</button>
+            <button type="submit" class="btn btn-primary">Proceed to payment</button>
             
         </form>
+
+        <!-- Payment Modal -->
+        <div v-if="showPaymentModal" class="payment-modal">
+            <div class="payment-content">
+                <h4>Payment Details</h4><br>
+                <h5>Price: </h5><p>Rs. {{price}}</p>
+                <!-- Payment Method -->
+                <div>
+                    <label>
+                        <input type="radio" value="card" v-model="paymentMethod" /> Card Payment
+                    </label>
+                    <label>
+                        <input type="radio" value="upi" v-model="paymentMethod" /> UPI Payment
+                    </label>
+                </div>
+
+                <!-- Card Payment Fields -->
+                <div v-if="paymentMethod === 'card'" class="mt-3">
+                    <div class="form-group">
+                        <label for="cardNumber">Card Number</label>
+                        <input type="text" id="cardNumber" v-model="cardDetails.cardNumber" class="form-control" />
+                    </div>
+                    <div class="form-group">
+                        <label for="expiryDate">Expiry Date</label>
+                        <input type="text" id="expiryDate" v-model="cardDetails.expiryDate" class="form-control" placeholder="MM/YY" />
+                    </div>
+                    <div class="form-group">
+                        <label for="cvv">CVV</label>
+                        <input type="password" id="cvv" v-model="cardDetails.cvv" class="form-control" />
+                    </div>
+                </div>
+
+                <!-- UPI Payment Field -->
+                <div v-if="paymentMethod === 'upi'" class="mt-3">
+                    <div class="form-group">
+                        <label for="upiId">UPI ID</label>
+                        <input type="text" id="upiId" v-model="upiId" class="form-control" placeholder="example@upi" />
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="mt-3">
+                    <button class="btn btn-success" @click="simulatePayment">Complete Payment</button>
+                    <button class="btn btn-danger" @click="closePaymentModal">Cancel</button>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -89,6 +136,15 @@ export default {
             selectedProfessional: null, // Selected professional's user ID
             contactNumber: "", // Customer's contact number
             remarks: "", // Optional remarks
+            price: 0,
+            showPaymentModal: false, // Payment modal visibility
+            paymentMethod: '', // Selected payment method ('card' or 'upi')
+            cardDetails: { // Card payment fields
+                cardNumber: '',
+                expiryDate: '',
+                cvv: '',
+            },
+            upiId: '', // UPI ID
         };
     },
     watch: {
@@ -112,11 +168,41 @@ export default {
             this.serviceName = this.serviceDetails?.name || '';
             this.customerAddress = this.customerDetails?.address || '';
             this.customerPincode = this.customerDetails?.pincode || '';
-            this.dateOfRequest = null; //new Date().toLocaleDateString(); // Reset to today
+            this.dateOfRequest = null; 
             this.selectedProfessional = null; // Reset selection
-            this.contactNumber = this.customerDetails?.mobile || ""; // Clear contact number
+            this.contactNumber = this.customerDetails?.mobile || ""; 
             this.remarks = ""; // Clear remarks
+            this.price = this.serviceDetails?.price || 0;
             this.fetchProfessionals(); // Fetch professionals each time
+        },
+        openPaymentModal() {
+            this.showPaymentModal = true; // Show payment modal
+        },
+        closePaymentModal() {
+            this.showPaymentModal = false; // Hide modal
+        },
+        async simulatePayment() {
+            // Simulate payment validation
+            if (this.paymentMethod === 'card') {
+                if (!this.cardDetails.cardNumber || !this.cardDetails.expiryDate || !this.cardDetails.cvv) {
+                    alert("Please fill in all card details.");
+                    return;
+                }
+                
+            } else if (this.paymentMethod === 'upi') {
+                if (!this.upiId) {
+                    alert("Please enter your UPI ID.");
+                    return;
+                }
+            } else {
+                alert("Please select a payment method.");
+                return;
+            }
+
+            // Simulate success
+            alert("Payment successful!");
+            this.closePaymentModal();
+            await this.submitServiceRequest();
         },
         async fetchProfessionals() {
             try {
@@ -200,5 +286,39 @@ export default {
 .container {
     max-width: 600px;
     margin: auto;
+}
+.payment-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.payment-content {
+    background: #fff;
+    padding: 20px;
+    border-radius: 5px;
+    width: 400px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    text-align: left;
+}
+
+.payment-content h4 {
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.payment-content .form-group {
+    margin-bottom: 10px;
+}
+
+.payment-content .btn {
+    margin: 5px 0;
+    width: 100%;
 }
 </style>
