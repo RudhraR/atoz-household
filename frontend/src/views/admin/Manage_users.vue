@@ -22,9 +22,9 @@
                                     </td>
 
                                     <td v-if="role == 'admin'" class="btn-group">
-                                        <button type="button" class="btn btn-sm btn-warning" v-if="customer.is_active" 
+                                        <button type="button" class="btn btn-sm btn-warning" v-if="!customer.flagged" 
                                         @click="block_unblock_user(customer.id, 'block')"> Block </button>
-                                        <button type="button" v-if="!customer.is_active" class="btn btn-sm btn-success" 
+                                        <button type="button" v-if="customer.flagged" class="btn btn-sm btn-success" 
                                         @click="block_unblock_user(customer.id, 'unblock')"> 
                                             Unblock </button>
                                         <button type="button" class="btn btn-sm btn-danger"
@@ -62,9 +62,9 @@
                                     <td>{{ professional.services_provided }}</td>
 
                                     <td v-if="role == 'admin'" class="btn-group">
-                                        <button type="button" class="btn btn-sm btn-warning" v-if="professional.is_active" 
+                                        <button type="button" class="btn btn-sm btn-warning" v-if="!professional.flagged" 
                                         @click="block_unblock_user(professional.id, 'block')"> Block </button>
-                                        <button type="button" v-if="!professional.is_active" class="btn btn-sm btn-success"
+                                        <button type="button" v-if="professional.flagged" class="btn btn-sm btn-success"
                                         @click="block_unblock_user(professional.id, 'unblock')">Unblock </button>
                                         <button type="button" class="btn btn-sm btn-danger"
                                             @click="updateProfessional(professional.id, 'reject')"> Delete </button>
@@ -157,7 +157,8 @@ export default {
                 'resume': '',
                 'experience': 0,
                 'address': '',
-                'pincode': ''
+                'pincode': '',
+                'mobile': ''
             },
             new_professionals: [],
             available_professionals: [],

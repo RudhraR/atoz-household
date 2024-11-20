@@ -236,6 +236,7 @@ export default {
           modal.hide(); // Hide the modal
           
           this.fetchCategories();
+          window.location.href = "/";
         }
       } catch (error) {
         console.log(error);

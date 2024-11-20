@@ -225,6 +225,7 @@ def create_category():
     db.session.commit()
     # Clear the cached categories data after creating a new category
     cache.delete('categories')
+    cache.delete('services')
     return jsonify({'message': 'Category created'}), 201
 
 @app.route('/categories', methods=['GET'])
@@ -409,37 +410,38 @@ def delete_service(id):
 @cache.cached(timeout=30, key_prefix='professionals')
 def get_professionals():
     current_user = get_jwt_identity()
+    
+    # Authorization check
     if current_user["role"] != "admin":
-        return jsonify({"message":"You are not authorized to access this resource"}), 403
-    available_professionals = User.query.filter_by(role='professional', is_active=True).all()
-    available_professionals_data = []
-    for professional in available_professionals:
-        available_professionals_data.append({
+        return jsonify({"message": "You are not authorized to access this resource"}), 403
+
+    # Helper function to transform User objects into dictionaries
+    def format_professional(professional):
+        return {
             'id': professional.id,
             'username': professional.username,
             'email': professional.email,
-            'services_provided': professional.category.name,
+            'services_provided': professional.category.name if professional.category else None,
             'resume': professional.resume,
             'experience': professional.experience,
             'address': professional.address,
             'pincode': professional.pincode,
-            'is_active': professional.is_active
-        })
-    
+            'mobile': professional.mobile,
+            'is_active': professional.is_active,
+            'flagged': professional.flagged
+        }
+
+    # Query and transform professionals
+    available_professionals = User.query.filter_by(role='professional', is_active=True).all()
     new_professionals = User.query.filter_by(role='professional', is_active=False).all()
-    new_professionals_data = []
-    for professional in new_professionals:
-        new_professionals_data.append({
-            'id': professional.id,
-            'username': professional.username,
-            'email': professional.email,
-            'services_provided': professional.category.name,
-            'resume': professional.resume,
-            'experience': professional.experience,
-            'address': professional.address,
-            'pincode': professional.pincode
-        })
-    return jsonify({'new_professionals': new_professionals_data, 'available_professionals': available_professionals_data}), 200
+
+    available_professionals_data = [format_professional(p) for p in available_professionals]
+    new_professionals_data = [format_professional(p) for p in new_professionals]
+
+    return jsonify({
+        'new_professionals': new_professionals_data,
+        'available_professionals': available_professionals_data
+    }), 200
 
 # Approve/reject new professional
 @app.route('/professionals/<int:id>', methods=['PUT', 'DELETE'])
@@ -451,16 +453,16 @@ def approve_or_delete_professionals(id):
     professional = User.query.filter_by(id=id).first() 
     if request.method == 'PUT':
         professional.is_active = True
+        cache.delete('professionals')
         db.session.commit()
         return jsonify({'message': 'Professional approved'})
     elif request.method == 'DELETE':
         db.session.delete(professional)
         os.remove(app.config["RESUME_FOLDER"] + "/" + professional.resume)
         db.session.commit()
+        cache.delete('professionals')
         return jsonify({'message': 'Professional rejected'})
     
-    # Clear the cached professionals data after updating/deleting professional
-    cache.delete('professionals')
     return jsonify({'message': 'Invalid request'})
 
 #View resume pdf of professionals
@@ -492,7 +494,7 @@ def get_customers():
             'mobile': customer.mobile,
             'address': customer.address,
             'pincode': customer.pincode,
-            'is_active': customer.is_active
+            'flagged': customer.flagged
         })
     return jsonify({'customers': customer_data}), 200
 
@@ -523,12 +525,12 @@ def block_user(id, status):
     user = User.query.filter_by(id=id).first()
     if user:
         if status == 'block':
-            user.is_active = False
+            user.flagged = True
             db.session.commit()
             cache.delete('customers') if user.role == 'customer' else cache.delete('professionals')
             return jsonify({'message': 'User blocked'}), 200
         elif status == 'unblock':
-            user.is_active = True
+            user.flagged = False
             db.session.commit()
             cache.delete('customers') if user.role == 'customer' else cache.delete('professionals')
             return jsonify({'message': 'User unblocked'}), 200

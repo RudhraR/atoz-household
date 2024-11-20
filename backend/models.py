@@ -21,14 +21,14 @@ class User(db.Model):
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     resume = db.Column(db.String(255), nullable=True)
     rating = db.Column(db.Float, nullable=True)
-    
+    flagged = db.Column(db.Boolean, default=False, nullable=False)
     services_provided = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=True)
     category = db.relationship('Category', back_populates='professionals_specialization')
     service_requests_as_customer = db.relationship('ServiceRequest', foreign_keys='ServiceRequest.customer_id', back_populates='customer')
     service_requests_as_professional = db.relationship('ServiceRequest', foreign_keys='ServiceRequest.professional_id', back_populates='professional')
     
     def __init__(self, username, email, role, password, address=None, pincode=None, mobile=None, 
-                 experience=None, services_provided=None, resume=None, rating=None):
+                 experience=None, services_provided=None, resume=None, rating=None, flagged=False):
       self.username=username
       self.email=email  
       self.role=role
@@ -40,6 +40,7 @@ class User(db.Model):
       self.services_provided = services_provided
       self.resume = resume
       self.rating = rating
+      self.flagged = flagged
       
       if role == 'professional':
             self.is_active = False

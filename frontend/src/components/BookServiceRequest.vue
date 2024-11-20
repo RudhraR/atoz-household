@@ -57,6 +57,7 @@
 
             <!-- Submit Button -->
             <button type="submit" class="btn btn-primary">Book Service</button>
+            
         </form>
     </div>
 </template>
