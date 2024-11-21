@@ -1,8 +1,6 @@
 <template>
     <div class="container" style="float:left;">
         <form @submit.prevent="openPaymentModal">
-
-            <!-- Service Name (prepopulated and disabled) -->
             <div class="form-group mb-3 row">
                 <label for="serviceName" class="col-sm-6 col-form-label left-align">Service Name</label>
                 <div class="col-sm-6">
@@ -10,7 +8,6 @@
                 </div>
             </div>
 
-            <!-- Customer Address (prepopulated and disabled) -->
             <div class="form-group mb-3 row">
                 <label for="address" class="col-sm-6 col-form-label">Your Address</label>
                 <div class="col-sm-6">
@@ -18,7 +15,6 @@
                 </div>
             </div>
 
-            <!-- Customer Pincode (prepopulated and disabled) -->
             <div class="form-group mb-3 row">
                 <label for="pincode" class="col-sm-6 col-form-label">Your Pincode</label>
                 <div class="col-sm-6">
@@ -26,7 +22,6 @@
                 </div>
             </div>
 
-            <!-- Customer Contact Number -->
             <div class="form-group mb-3 row">
                 <label for="contactNumber" class="col-sm-6 col-form-label">Your Contact Number</label>
                 <div class="col-sm-6">
@@ -34,19 +29,18 @@
                 </div>
             </div>
 
-            <!-- Date of Request (prepopulated and disabled) -->
             <div class="form-group mb-3 row">
                 <label for="dateOfRequest" class="col-sm-6 col-form-label">Date of Request</label>
                 <div class="col-sm-6">
-                    <input type="datetime-local" id="dateOfRequest" class="form-control" v-model="dateOfRequest" />
+                    <input type="datetime-local" id="dateOfRequest" class="form-control" v-model="dateOfRequest" required />
+                    <span v-if="errors.dateOfRequest" class="text-danger">{{ errors.dateOfRequest }}</span>
                 </div>
             </div>
 
-            <!-- Select Available Professional -->
             <div class="form-group mb-3 row">
                 <label for="professional" class="col-sm-6 col-form-label">Available Professionals</label>
                 <div class="col-sm-6">
-                    <select id="professional" class="form-control" v-model="selectedProfessional">
+                    <select id="professional" class="form-control" v-model="selectedProfessional" required>
                         <option v-for="user in professionals" :key="user.id" :value="user.id">
                             {{ user.username }} &nbsp;&nbsp;
                             {{ user.rating ? `(Rating: ${user.rating}/5)` : '(No ratings yet)' }}
@@ -57,14 +51,16 @@
 
             <!-- Submit Button -->
             <button type="submit" class="btn btn-primary">Proceed to payment</button>
-            
+
         </form>
 
         <!-- Payment Modal -->
         <div v-if="showPaymentModal" class="payment-modal">
             <div class="payment-content">
                 <h4>Payment Details</h4><br>
-                <h5>Price: </h5><p>Rs. {{price}}</p>
+                <h5>Price: </h5>
+                <p>Rs. {{ price }}</p>
+
                 <!-- Payment Method -->
                 <div>
                     <label>
@@ -75,19 +71,29 @@
                     </label>
                 </div>
 
+                <!-- Validation Errors -->
+                <p v-if="errorMessage" class="error text-danger">{{ errorMessage }}</p>
+
                 <!-- Card Payment Fields -->
                 <div v-if="paymentMethod === 'card'" class="mt-3">
                     <div class="form-group">
                         <label for="cardNumber">Card Number</label>
-                        <input type="text" id="cardNumber" v-model="cardDetails.cardNumber" class="form-control" />
+                        <input type="text" id="cardNumber" v-model="cardDetails.cardNumber" class="form-control"
+                            placeholder="Enter 16-digit card number" />
+                        <p v-if="errors.cardNumber" class="error text-danger">{{ errors.cardNumber }}</p>
                     </div>
                     <div class="form-group">
                         <label for="expiryDate">Expiry Date</label>
-                        <input type="text" id="expiryDate" v-model="cardDetails.expiryDate" class="form-control" placeholder="MM/YY" />
+                        <input type="text" id="expiryDate" v-model="cardDetails.expiryDate" class="form-control"
+                            placeholder="MM/YY" />
+                        <p v-if="errors.expiryDate" class="error text-danger">{{ errors.expiryDate }}</p>
                     </div>
+
                     <div class="form-group">
                         <label for="cvv">CVV</label>
-                        <input type="password" id="cvv" v-model="cardDetails.cvv" class="form-control" />
+                        <input type="password" id="cvv" v-model="cardDetails.cvv" class="form-control"
+                            placeholder="Enter 3-digit CVV" />
+                        <p v-if="errors.cvv" class="error text-danger">{{ errors.cvv }}</p>
                     </div>
                 </div>
 
@@ -96,12 +102,13 @@
                     <div class="form-group">
                         <label for="upiId">UPI ID</label>
                         <input type="text" id="upiId" v-model="upiId" class="form-control" placeholder="example@upi" />
+                        <p v-if="errors.upiId" class="error text-danger">{{ errors.upiId }}</p>
                     </div>
                 </div>
 
                 <!-- Action Buttons -->
                 <div class="mt-3">
-                    <button class="btn btn-success" @click="simulatePayment">Complete Payment</button>
+                    <button class="btn btn-success" @click="validatePayment">Complete Payment</button>
                     <button class="btn btn-danger" @click="closePaymentModal">Cancel</button>
                 </div>
             </div>
@@ -128,14 +135,14 @@ export default {
     },
     data() {
         return {
-            serviceName: '', // Initialized empty
-            customerAddress: '', // Initialized empty
-            customerPincode: '', // Initialized empty
-            dateOfRequest: '', // Initialized empty
-            professionals: [], // List of available professionals
-            selectedProfessional: null, // Selected professional's user ID
+            serviceName: '',
+            customerAddress: '',
+            customerPincode: '',
+            dateOfRequest: '',
+            professionals: [],
+            selectedProfessional: null,
             contactNumber: "", // Customer's contact number
-            remarks: "", // Optional remarks
+            remarks: "",
             price: 0,
             showPaymentModal: false, // Payment modal visibility
             paymentMethod: '', // Selected payment method ('card' or 'upi')
@@ -145,6 +152,8 @@ export default {
                 cvv: '',
             },
             upiId: '', // UPI ID
+            errors: {}, // For payment validation errors
+            errorMessage: "",
         };
     },
     watch: {
@@ -168,41 +177,75 @@ export default {
             this.serviceName = this.serviceDetails?.name || '';
             this.customerAddress = this.customerDetails?.address || '';
             this.customerPincode = this.customerDetails?.pincode || '';
-            this.dateOfRequest = null; 
+            this.dateOfRequest = null;
             this.selectedProfessional = null; // Reset selection
-            this.contactNumber = this.customerDetails?.mobile || ""; 
+            this.contactNumber = this.customerDetails?.mobile || "";
             this.remarks = ""; // Clear remarks
             this.price = this.serviceDetails?.price || 0;
             this.fetchProfessionals(); // Fetch professionals each time
         },
         openPaymentModal() {
-            this.showPaymentModal = true; // Show payment modal
+            const selectedDate = new Date(this.dateOfRequest);
+            const currentDate = new Date();
+
+            if (selectedDate <= currentDate) {
+                this.errors.dateOfRequest = "The date and time must be in the future.";
+                return;
+            }
+            else{
+                this.showPaymentModal = true; // Show payment modal
+            }
         },
         closePaymentModal() {
             this.showPaymentModal = false; // Hide modal
         },
-        async simulatePayment() {
-            // Simulate payment validation
-            if (this.paymentMethod === 'card') {
-                if (!this.cardDetails.cardNumber || !this.cardDetails.expiryDate || !this.cardDetails.cvv) {
-                    alert("Please fill in all card details.");
-                    return;
+        async validatePayment() {
+            this.errors = {}; // Reset errors
+            let valid = true;
+
+            // Validate card details if payment method is "card"
+            if (this.paymentMethod === "card") {
+                if (!/^\d{16}$/.test(this.cardDetails.cardNumber)) {
+                    this.errors.cardNumber = "Card number must be 16 digits.";
+                    valid = false;
                 }
-                
-            } else if (this.paymentMethod === 'upi') {
-                if (!this.upiId) {
-                    alert("Please enter your UPI ID.");
-                    return;
+                if (!/^\d{2}\/\d{2}$/.test(this.cardDetails.expiryDate)) {
+                    this.errors.expiryDate = "Expiry date must be in MM/YY format.";
+                    valid = false;
+                } else {
+                    const [month, year] = this.cardDetails.expiryDate.split("/").map(Number);
+                    const currentYear = new Date().getFullYear() % 100; // Get last two digits of the current year
+                    const currentMonth = new Date().getMonth() + 1; // Months are zero-based
+                    
+                    if (month < 1 || month > 12) {
+                        this.errors.expiryDate = "Month must be between 01 and 12.";
+                        valid = false;
+                    } else if (year < currentYear || (year === currentYear && month < currentMonth)) {
+                        this.errors.expiryDate = "Expiry date cannot be in the past.";
+                        valid = false;
+                    }
+                }
+                if (!/^\d{3}$/.test(this.cardDetails.cvv)) {
+                    this.errors.cvv = "CVV must be 3 digits.";
+                    valid = false;
+                }
+            } else if (this.paymentMethod === "upi") {
+                // Validate UPI ID if payment method is "upi"
+                if (!/^[a-zA-Z0-9.\-_]+@[a-zA-Z]+$/.test(this.upiId)) {
+                    this.errors.upiId = "Invalid UPI ID format.";
+                    valid = false;
                 }
             } else {
-                alert("Please select a payment method.");
-                return;
+                this.errorMessage = "Please select a payment method.";
+                valid = false;
             }
 
-            // Simulate success
+            if (!valid) return;
+
+            // Simulate payment success
             alert("Payment successful!");
             this.closePaymentModal();
-            await this.submitServiceRequest();
+            this.submitServiceRequest();
         },
         async fetchProfessionals() {
             try {
@@ -215,7 +258,7 @@ export default {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
                     },
-                }); 
+                });
                 const data = await response.json();
                 this.professionals = data.professionals; // Assign the filtered professionals to the list
                 console.log(this.professionals);
@@ -287,6 +330,7 @@ export default {
     max-width: 600px;
     margin: auto;
 }
+
 .payment-modal {
     position: fixed;
     top: 0;

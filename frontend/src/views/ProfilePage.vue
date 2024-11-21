@@ -4,7 +4,7 @@
     <div class="card shadow">
       <h5 class="card-header text-white bg-secondary">Edit Profile Details</h5>
       <div class="card-body">
-        
+      <form @submit.prevent="update">        
         <!-- Username field -->
         <div class="form-group mb-3 row">
           <label for="username" class="col-sm-4 col-form-label">Name</label>
@@ -58,7 +58,8 @@
           </div>
         </div>
 
-        <button class="btn btn-primary w-100" @click="update">Update</button>
+        <button class="btn btn-primary w-100" type="submit">Update</button>
+        </form>
       </div>
     </div>
   </div>
@@ -108,7 +109,7 @@ export default {
           alert(data.error)
         } else {
           this.email = data.user.email
-          this.password = data.user.password
+          // this.password = data.user.password
           this.username = data.user.username
           this.address = data.user.address
           this.pincode = data.user.pincode

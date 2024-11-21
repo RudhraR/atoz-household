@@ -298,6 +298,17 @@ export default {
     },
     async rescheduleRequest(requestId, rescheduledDate) {
      try{
+      if (!rescheduledDate) {
+        alert('Please select a date');
+        return;
+      }
+      const selectedDate = new Date(this.rescheduledDate);
+      const currentDate = new Date();
+
+      if (selectedDate <= currentDate) {
+        alert('The date and time must be in the future.');
+        return;
+      }
       const formData = new FormData();
       formData.append('rescheduled_date', rescheduledDate);
       const response = await fetch(`http://127.0.0.1:5000/service_requests/${requestId}/reschedule`, {
